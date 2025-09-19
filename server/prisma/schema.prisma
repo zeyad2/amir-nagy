@@ -1,0 +1,402 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uuid             BigInt    @id(map: "user_pkey") @default(autoincrement())
+  email            String    @unique(map: "user_email_key")
+  hashedPassword   String
+  role             Role
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  paymentsApproved Payment[] @relation("ApprovedBy")
+  student          Student?
+
+  @@map("User")
+}
+
+model Student {
+  uuid                BigInt               @id(map: "student_pkey")
+  firstName           String
+  middleName          String
+  lastName            String
+  phone               String               @db.VarChar(30)
+  parentFirstName     String
+  parentLastName      String
+  parentEmail         String
+  parentPhone         String               @db.VarChar(30)
+  attendances         Attendance[]
+  enrollments         Enrollment[]
+  enrollmentRequests  EnrollmentRequest[]
+  homeworkSubmissions HomeworkSubmission[]
+  user                User                 @relation(fields: [uuid], references: [uuid], onDelete: Cascade, map: "student_uuid_fkey")
+  testSubmissions     TestSubmission[]
+
+  @@map("Student")
+}
+
+model Course {
+  id                 BigInt              @id(map: "course_pkey") @default(autoincrement())
+  title              String
+  thumbnail          String?
+  description        String?
+  createdAt          DateTime            @default(now())
+  status             CourseStatus        @default(draft)
+  type               CourseType
+  price              Int?
+  deletedAt          DateTime?
+  courseHomeworks    CourseHomework[]
+  courseLessons      CourseLesson[]
+  courseTests        CourseTest[]
+  enrollments        Enrollment[]
+  enrollmentRequests EnrollmentRequest[]
+  sessions           Session[]
+
+  @@map("Course")
+}
+
+model Enrollment {
+  id            BigInt           @id(map: "enrollment_pkey") @default(autoincrement())
+  studentId     BigInt
+  courseId      BigInt
+  status        EnrollmentStatus @default(active)
+  createdAt     DateTime         @default(now())
+  deletedAt     DateTime?
+  accessWindows AccessWindow[]
+  course        Course           @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "enrollment_courseId_fkey")
+  student       Student          @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "enrollment_studentId_fkey")
+  payments      Payment[]
+
+  @@unique([studentId, courseId], map: "enrollment_studentId_courseId_key")
+  @@index([courseId], map: "enrollment_courseId_idx")
+  @@index([studentId], map: "enrollment_studentId_idx")
+  @@map("Enrollment")
+}
+
+model Session {
+  id                 BigInt         @id(map: "session_pkey") @default(autoincrement())
+  courseId           BigInt
+  title              String?
+  date               DateTime
+  accessWindowsEnd   AccessWindow[] @relation("EndSession")
+  accessWindowsStart AccessWindow[] @relation("StartSession")
+  attendances        Attendance[]
+  course             Course         @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "session_courseId_fkey")
+
+  @@index([courseId], map: "session_courseId_idx")
+  @@map("Session")
+}
+
+model AccessWindow {
+  id             BigInt     @id(map: "accessWindow_pkey") @default(autoincrement())
+  enrollmentId   BigInt
+  startSessionId BigInt
+  endSessionId   BigInt
+  createdAt      DateTime   @default(now())
+  endSession     Session    @relation("EndSession", fields: [endSessionId], references: [id], onDelete: Cascade, map: "accessWindow_endSessionId_fkey")
+  enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, map: "accessWindow_enrollmentId_fkey")
+  startSession   Session    @relation("StartSession", fields: [startSessionId], references: [id], onDelete: Cascade, map: "accessWindow_startSessionId_fkey")
+
+  @@index([enrollmentId], map: "accessWindow_enrollmentId_idx")
+  @@map("AccessWindow")
+}
+
+model Payment {
+  id                BigInt        @id(map: "payment_pkey") @default(autoincrement())
+  enrollmentId      BigInt
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @default("EGP") @db.VarChar(10)
+  paymentDate       DateTime      @default(now())
+  paymentType       PaymentType
+  status            PaymentStatus @default(pending)
+  approvedBy        BigInt?
+  sessionsPurchased Int?
+  notes             String?
+  deletedAt         DateTime?
+  approver          User?         @relation("ApprovedBy", fields: [approvedBy], references: [uuid], map: "payment_approvedBy_fkey")
+  enrollment        Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, map: "payment_enrollmentId_fkey")
+
+  @@index([enrollmentId], map: "payment_enrollmentId_idx")
+  @@index([status], map: "payment_status_idx")
+  @@map("Payment")
+}
+
+model Attendance {
+  id        BigInt           @id(map: "attendance_pkey") @default(autoincrement())
+  sessionId BigInt
+  studentId BigInt
+  status    AttendanceStatus
+  session   Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade, map: "attendance_sessionId_fkey")
+  student   Student          @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "attendance_studentId_fkey")
+
+  @@unique([sessionId, studentId], map: "attendance_sessionId_studentId_key")
+  @@index([sessionId], map: "attendance_sessionId_idx")
+  @@index([studentId], map: "attendance_studentId_idx")
+  @@map("Attendance")
+}
+
+model Lesson {
+  id            BigInt         @id(map: "lesson_pkey") @default(autoincrement())
+  title         String
+  videoLink     String
+  courseLessons CourseLesson[]
+
+  @@map("Lesson")
+}
+
+model CourseLesson {
+  id       BigInt @id(map: "courseLesson_pkey") @default(autoincrement())
+  courseId BigInt
+  lessonId BigInt
+  order    Int?
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseLesson_courseId_fkey")
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade, map: "courseLesson_lessonId_fkey")
+
+  @@unique([courseId, lessonId], map: "courseLesson_courseId_lessonId_key")
+  @@index([courseId], map: "courseLesson_courseId_idx")
+  @@map("CourseLesson")
+}
+
+model Homework {
+  id              BigInt               @id(map: "homework_pkey") @default(autoincrement())
+  title           String
+  instructions    String?
+  createdAt       DateTime             @default(now())
+  courseHomeworks CourseHomework[]
+  passages        HomeworkPassage[]
+  submissions     HomeworkSubmission[]
+
+  @@map("Homework")
+}
+
+model HomeworkPassage {
+  id         BigInt             @id(map: "homeworkPassage_pkey") @default(autoincrement())
+  homeworkId BigInt
+  title      String?
+  content    String
+  imageURL   String?
+  order      Int?
+  homework   Homework           @relation(fields: [homeworkId], references: [id], onDelete: Cascade, map: "homeworkPassage_homeworkId_fkey")
+  questions  HomeworkQuestion[]
+
+  @@map("HomeworkPassage")
+}
+
+model HomeworkQuestion {
+  id           BigInt           @id(map: "homeworkQuestion_pkey") @default(autoincrement())
+  passageId    BigInt
+  questionText String
+  order        Int?
+  answers      HomeworkAnswer[]
+  passage      HomeworkPassage  @relation(fields: [passageId], references: [id], onDelete: Cascade, map: "homeworkQuestion_passageId_fkey")
+  choices      QuestionChoice[]
+
+  @@map("HomeworkQuestion")
+}
+
+model QuestionChoice {
+  id              BigInt           @id(map: "questionChoice_pkey") @default(autoincrement())
+  questionId      BigInt
+  choiceText      String
+  isCorrect       Boolean
+  order           Int?
+  homeworkAnswers HomeworkAnswer[]
+  question        HomeworkQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade, map: "questionChoice_questionId_fkey")
+
+  @@map("QuestionChoice")
+}
+
+model CourseHomework {
+  id         BigInt   @id(map: "courseHomework_pkey") @default(autoincrement())
+  courseId   BigInt
+  homeworkId BigInt
+  dueDate    DateTime @db.Date
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseHomework_courseId_fkey")
+  homework   Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade, map: "courseHomework_homeworkId_fkey")
+
+  @@unique([courseId, homeworkId], map: "courseHomework_courseId_homeworkId_key")
+  @@index([courseId], map: "courseHomework_courseId_idx")
+  @@map("CourseHomework")
+}
+
+model HomeworkSubmission {
+  id          BigInt           @id(map: "homeworkSubmission_pkey") @default(autoincrement())
+  homeworkId  BigInt
+  studentId   BigInt
+  submittedAt DateTime         @default(now())
+  score       Int
+  answers     HomeworkAnswer[]
+  homework    Homework         @relation(fields: [homeworkId], references: [id], onDelete: Cascade, map: "homeworkSubmission_homeworkId_fkey")
+  student     Student          @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "homeworkSubmission_studentId_fkey")
+
+  @@unique([homeworkId, studentId], map: "homeworkSubmission_homeworkId_studentId_key")
+  @@map("HomeworkSubmission")
+}
+
+model HomeworkAnswer {
+  id           BigInt             @id(map: "homeworkAnswer_pkey") @default(autoincrement())
+  submissionId BigInt
+  questionId   BigInt
+  choiceId     BigInt?
+  isCorrect    Boolean?
+  choice       QuestionChoice?    @relation(fields: [choiceId], references: [id], map: "homeworkAnswer_choiceId_fkey")
+  question     HomeworkQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade, map: "homeworkAnswer_questionId_fkey")
+  submission   HomeworkSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade, map: "homeworkAnswer_submissionId_fkey")
+
+  @@map("HomeworkAnswer")
+}
+
+model Test {
+  id           BigInt           @id(map: "test_pkey") @default(autoincrement())
+  title        String
+  instructions String?
+  duration     Int?
+  createdAt    DateTime         @default(now())
+  courseTests  CourseTest[]
+  passages     TestPassage[]
+  submissions  TestSubmission[]
+
+  @@map("Test")
+}
+
+model TestPassage {
+  id        BigInt         @id(map: "testPassage_pkey") @default(autoincrement())
+  testId    BigInt
+  title     String?
+  content   String
+  imageURL  String?
+  order     Int?
+  test      Test           @relation(fields: [testId], references: [id], onDelete: Cascade, map: "testPassage_testId_fkey")
+  questions TestQuestion[]
+
+  @@map("TestPassage")
+}
+
+model TestQuestion {
+  id           BigInt               @id(map: "testQuestion_pkey") @default(autoincrement())
+  passageId    BigInt
+  questionText String
+  order        Int?
+  answers      TestAnswer[]
+  passage      TestPassage          @relation(fields: [passageId], references: [id], onDelete: Cascade, map: "testQuestion_passageId_fkey")
+  choices      TestQuestionChoice[]
+
+  @@map("TestQuestion")
+}
+
+model TestQuestionChoice {
+  id         BigInt       @id(map: "testQuestionChoice_pkey") @default(autoincrement())
+  questionId BigInt
+  choiceText String
+  isCorrect  Boolean
+  order      Int?
+  answers    TestAnswer[]
+  question   TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade, map: "testQuestionChoice_questionId_fkey")
+
+  @@map("TestQuestionChoice")
+}
+
+model CourseTest {
+  id       BigInt   @id(map: "courseTest_pkey") @default(autoincrement())
+  courseId BigInt
+  testId   BigInt
+  dueDate  DateTime @db.Date
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseTest_courseId_fkey")
+  test     Test     @relation(fields: [testId], references: [id], onDelete: Cascade, map: "courseTest_testId_fkey")
+
+  @@unique([courseId, testId], map: "courseTest_courseId_testId_key")
+  @@index([courseId], map: "courseTest_courseId_idx")
+  @@map("CourseTest")
+}
+
+model TestSubmission {
+  id          BigInt       @id(map: "testSubmission_pkey") @default(autoincrement())
+  testId      BigInt
+  studentId   BigInt
+  submittedAt DateTime     @default(now())
+  score       Int
+  answers     TestAnswer[]
+  student     Student      @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "testSubmission_studentId_fkey")
+  test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade, map: "testSubmission_testId_fkey")
+
+  @@unique([testId, studentId], map: "testSubmission_testId_studentId_key")
+  @@map("TestSubmission")
+}
+
+model TestAnswer {
+  id           BigInt              @id(map: "testAnswer_pkey") @default(autoincrement())
+  submissionId BigInt
+  questionId   BigInt
+  choiceId     BigInt?
+  isCorrect    Boolean?
+  choice       TestQuestionChoice? @relation(fields: [choiceId], references: [id], map: "testAnswer_choiceId_fkey")
+  question     TestQuestion        @relation(fields: [questionId], references: [id], onDelete: Cascade, map: "testAnswer_questionId_fkey")
+  submission   TestSubmission      @relation(fields: [submissionId], references: [id], onDelete: Cascade, map: "testAnswer_submissionId_fkey")
+
+  @@index([submissionId], map: "testAnswer_submissionId_idx")
+  @@map("TestAnswer")
+}
+
+model EnrollmentRequest {
+  id          BigInt                  @id(map: "enrollmentRequest_pkey") @default(autoincrement())
+  studentId   BigInt
+  courseId    BigInt
+  status      EnrollmentRequestStatus @default(pending)
+  requestedAt DateTime                @default(now())
+  course      Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "enrollmentRequest_courseId_fkey")
+  student     Student                 @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "enrollmentRequest_studentId_fkey")
+
+  @@unique([studentId, courseId], map: "enrollmentRequest_studentId_courseId_key")
+  @@map("EnrollmentRequest")
+}
+
+enum Role {
+  admin
+  student
+}
+
+enum CourseStatus {
+  draft
+  published
+  archived
+}
+
+enum CourseType {
+  finished
+  live
+}
+
+enum EnrollmentStatus {
+  active
+  suspended
+  completed
+}
+
+enum PaymentType {
+  full
+  installment
+  per_session
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+  rejected
+}
+
+enum AttendanceStatus {
+  present
+  absent
+}
+
+enum EnrollmentRequestStatus {
+  pending
+  approved
+  rejected
+}
