@@ -144,6 +144,7 @@ export const getProfile = async (req, res) => {
 
 
 export const forgotPassword = async (req, res) => {
+  
   const { email } = req.body;
 
   try {
@@ -155,8 +156,10 @@ export const forgotPassword = async (req, res) => {
     }
 
     // Check if user exists
+      const normalizedEmail = String(email).trim().toLowerCase();
+
     const user = await Prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       include: {
         student: {
           select: {
@@ -291,6 +294,15 @@ export const resetPassword = async (req, res) => {
       }),
       Prisma.passwordResetToken.update({
         where: { id: resetTokenRecord.id },
+        data: { usedAt: new Date() },
+      }),
+      // Invalidate any other outstanding reset tokens for this user
+      Prisma.passwordResetToken.updateMany({
+        where: {
+          userId: resetTokenRecord.userId,
+          id: { not: resetTokenRecord.id },
+          usedAt: null,
+        },
         data: { usedAt: new Date() },
       }),
     ]);

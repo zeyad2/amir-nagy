@@ -1,11 +1,15 @@
 import nodemailer from "nodemailer";
 import envConfig from "./env.config.js";
 
+// Parse port and set secure flag dynamically
+const emailPort = Number(envConfig.EMAIL_PORT) || 587;
+const isSecure = emailPort === 465; // SMTPS uses 465, STARTTLS uses 587
+
 // Create reusable transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
   host: envConfig.EMAIL_HOST,
-  port: envConfig.EMAIL_PORT,
-  secure: true, // true for 465, false for other ports
+  port: emailPort,
+  secure: isSecure, // true for 465 (SMTPS), false for 587 (STARTTLS)
   auth: {
     user: envConfig.EMAIL_USER,
     pass: envConfig.EMAIL_PASS,
