@@ -8,17 +8,32 @@ datasource db {
 }
 
 model User {
-  uuid             BigInt    @id(map: "user_pkey") @default(autoincrement())
-  email            String    @unique(map: "user_email_key")
+  uuid             BigInt              @id(map: "user_pkey") @default(autoincrement())
+  email            String              @unique(map: "user_email_key")
   hashedPassword   String
   role             Role
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
   deletedAt        DateTime?
-  paymentsApproved Payment[] @relation("ApprovedBy")
+  paymentsApproved Payment[]           @relation("ApprovedBy")
   student          Student?
+  passwordResetTokens PasswordResetToken[]
 
   @@map("User")
+}
+
+model PasswordResetToken {
+  id        BigInt    @id(map: "passwordResetToken_pkey") @default(autoincrement())
+  userId    BigInt
+  token     String    @unique(map: "passwordResetToken_token_key")
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [uuid], onDelete: Cascade, map: "passwordResetToken_userId_fkey")
+
+  @@index([userId], map: "passwordResetToken_userId_idx")
+  @@index([token], map: "passwordResetToken_token_idx")
+  @@map("PasswordResetToken")
 }
 
 model Student {
