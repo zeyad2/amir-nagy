@@ -1,0 +1,14 @@
+{
+  "name": "amir-nagy",
+  "version": "1.0.0",
+  "description": "A comprehensive online learning platform for Mr. Amir Nagy's SAT & English courses. This platform supports course delivery, automated grading, student performance tracking, and administrative management.",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.5.2"
+  }
+}

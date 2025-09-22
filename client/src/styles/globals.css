@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* SAT Platform Custom Styles */
+@layer components {
+  /* Assessment Specific Styles */
+  .assessment-passage {
+    @apply bg-gray-50 p-6 rounded-lg border border-gray-200 font-serif leading-relaxed;
+  }
+
+  .assessment-question {
+    @apply bg-white p-4 rounded-lg border border-gray-200 mb-4;
+  }
+
+  .assessment-choice {
+    @apply flex items-center space-x-3 p-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors;
+  }
+
+  .assessment-choice input[type="radio"] {
+    @apply w-4 h-4 text-sat-primary border-gray-300 focus:ring-sat-primary;
+  }
+
+  /* Navigation Styles */
+  .nav-link {
+    @apply text-gray-600 hover:text-sat-primary transition-colors duration-200 font-medium;
+  }
+
+  .nav-link-active {
+    @apply text-sat-primary border-b-2 border-sat-primary;
+  }
+
+  /* Button Variants */
+  .btn-sat-primary {
+    @apply bg-sat-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors;
+  }
+
+  .btn-sat-secondary {
+    @apply bg-sat-secondary hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors;
+  }
+
+  .btn-outline {
+    @apply border border-sat-primary text-sat-primary hover:bg-sat-primary hover:text-white font-medium py-2 px-4 rounded-md transition-all;
+  }
+
+  /* Card Styles */
+  .course-card {
+    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden;
+  }
+
+  .dashboard-card {
+    @apply bg-white p-6 rounded-lg shadow-sm border border-gray-200;
+  }
+
+  /* Form Styles */
+  .form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sat-primary focus:border-transparent;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .form-error {
+    @apply text-red-600 text-sm mt-1;
+  }
+
+  /* Loading Skeleton */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2;
+  }
+
+  .progress-fill {
+    @apply bg-sat-primary h-2 rounded-full transition-all duration-500;
+  }
+}
+
+/* Typography */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Assessment Timer Styles */
+.timer-warning {
+  @apply text-orange-600 font-bold animate-pulse;
+}
+
+.timer-critical {
+  @apply text-red-600 font-bold animate-pulse;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .assessment-passage {
+    @apply p-4 text-sm;
+  }
+
+  .assessment-question {
+    @apply p-3;
+  }
+
+  .assessment-choice {
+    @apply p-2;
+  }
+}
