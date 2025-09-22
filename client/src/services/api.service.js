@@ -54,8 +54,7 @@ api.interceptors.response.use(
       toast.error('Server error. Please try again later.')
     }
 
-    // Handle validation errors (but not for auth endpoints - they handle their own errors)
-    if (response?.status === 400 && !config.url.includes('/auth/')) {
+
       const message = response.data?.message || 'Invalid request'
       toast.error(message)
     }
