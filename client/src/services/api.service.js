@@ -54,8 +54,7 @@ api.interceptors.response.use(
       toast.error('Server error. Please try again later.')
     }
 
-    // Handle validation errors
-    if (response?.status === 400) {
+
       const message = response.data?.message || 'Invalid request'
       toast.error(message)
     }
