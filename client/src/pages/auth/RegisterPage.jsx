@@ -29,7 +29,7 @@ export default function RegisterPage() {
       email: '',
       password: '',
       confirmPassword: '',
-      phoneNumber: '',
+      phone: '',
       parentFirstName: '',
       parentLastName: '',
       parentPhone: '',
@@ -143,14 +143,14 @@ export default function RegisterPage() {
                     label="Phone Number"
                     type="tel"
                     placeholder="+20 123 456 7890"
-                    {...register('phoneNumber', {
+                    {...register('phone', {
                       required: 'Phone number is required',
                       pattern: {
                         value: /^[\+]?[1-9][\d]{0,15}$/,
                         message: 'Please enter a valid phone number'
                       }
                     })}
-                    error={errors.phoneNumber?.message}
+                    error={errors.phone?.message}
                     required
                   />
                 </div>
