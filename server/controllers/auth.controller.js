@@ -110,7 +110,7 @@ export const getProfile = async (req, res) => {
   }
 
   if (req.user.role === "admin") {
-    res.redirect("/admin/profile");
+    return res.redirect("/admin/profile");
   }
 
   try {

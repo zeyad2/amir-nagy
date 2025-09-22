@@ -2,6 +2,19 @@
 
 A comprehensive online learning platform for Mr. Amir Nagy's SAT & English courses. This platform supports course delivery, automated grading, student performance tracking, and administrative management.
 
+## 📚 Documentation
+
+- **[📋 PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)** - Complete project overview, implementation status, and technical details
+- **[🛠 DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - Development guidelines, setup instructions, and coding standards
+- **[🧪 TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Comprehensive testing procedures, API documentation, and validation checklists
+- **[⚙️ CLAUDE.md](./claude.md)** - Complete build instructions and specifications (for development team)
+
+## 🚀 Quick Start
+
+1. **Setup Environment**: Follow instructions in [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)
+2. **Test Implementation**: Use procedures in [TESTING_GUIDE.md](./TESTING_GUIDE.md)
+3. **View Project Status**: Check [PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)
+
 ## Features
 
 ### For Students
