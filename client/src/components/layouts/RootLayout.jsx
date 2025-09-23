@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
-import Footer from './Footer'
+import Footer from '../common/Footer'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 
 export default function RootLayout() {

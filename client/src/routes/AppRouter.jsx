@@ -20,6 +20,7 @@ import AssessmentPage from '@/pages/student/AssessmentPage'
 import PerformancePage from '@/pages/student/PerformancePage'
 
 // Admin Pages
+import AdminLayout from '@/components/layouts/AdminLayout'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminCourses from '@/pages/admin/AdminCourses'
 import AdminStudents from '@/pages/admin/AdminStudents'
@@ -114,50 +115,24 @@ export function AppRouter() {
           }
         />
 
-        {/* Admin Protected Routes */}
-        <Route
-          path="admin"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin/courses"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminCourses />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin/students"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminStudents />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin/resources"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminResources />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="admin/reports"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminReports />
-            </ProtectedRoute>
-          }
-        />
-
         {/* 404 Route */}
         <Route path="*" element={<NotFoundPage />} />
+      </Route>
+
+      {/* Admin Protected Routes - Separate from RootLayout */}
+      <Route
+        path="admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="courses" element={<AdminCourses />} />
+        <Route path="students" element={<AdminStudents />} />
+        <Route path="resources" element={<AdminResources />} />
+        <Route path="reports" element={<AdminReports />} />
       </Route>
     </Routes>
   )

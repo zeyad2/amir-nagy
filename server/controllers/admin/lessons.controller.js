@@ -55,7 +55,8 @@ export const getLessons = async (req, res) => {
         title: cl.course.title,
         status: cl.course.status
       })),
-      canDelete: lesson.courseLessons.length === 0
+      canDelete: lesson.courseLessons.length === 0,
+      createdAt: lesson.createdAt
     }));
 
     return createResponse(res, 200, 'Lessons fetched successfully', {
@@ -108,7 +109,8 @@ export const getLesson = async (req, res) => {
         title: cl.course.title,
         status: cl.course.status
       })),
-      canDelete: lesson.courseLessons.length === 0
+      canDelete: lesson.courseLessons.length === 0,
+      createdAt: lesson.createdAt
     };
 
     return createResponse(res, 200, 'Lesson fetched successfully', { lesson: lessonWithUsage });

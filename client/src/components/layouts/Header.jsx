@@ -132,6 +132,9 @@ export default function Header() {
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-controls="mobile-menu"
+              aria-expanded={mobileMenuOpen}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             >
               {mobileMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -145,7 +148,7 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden">
+        <div className="md:hidden" id="mobile-menu" role="navigation" aria-label="Mobile navigation menu">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
             {navItems.map((item) => (
               <Link
