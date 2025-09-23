@@ -9,7 +9,9 @@ import { handleUploadError } from "../middlewares/upload.middleware.js";
 import lessonsRouter from "./admin/lessons.routes.js";
 import homeworkRouter from "./admin/homework.routes.js";
 import testsRouter from "./admin/tests.routes.js";
-import Prisma from "../prisma/prisma.js";
+import dashboardRouter from "./admin/dashboard.routes.js";
+import studentsRouter from "./admin/students.routes.js";
+import enrollmentRequestsRouter from "./admin/enrollment-requests.routes.js";
 
 const adminRouter = Router();
 
@@ -24,49 +26,8 @@ adminRouter.use(handleUploadError);
 adminRouter.use("/lessons", lessonsRouter);
 adminRouter.use("/homework", homeworkRouter);
 adminRouter.use("/tests", testsRouter);
-
-// Admin dashboard endpoint
-adminRouter.get('/dashboard', async (req, res) => {
-  try {
-    const [
-      lessonsCount,
-      homeworkCount,
-      testsCount,
-      recentActivity
-    ] = await Promise.all([
-      // Get lessons count
-      Prisma.lesson.count(),
-
-      // Get homework count
-      Prisma.homework.count(),
-
-      // Get tests count
-      Prisma.test.count(),
-
-      // Get recent activity (simplified for now)
-      Promise.resolve([])
-    ]);
-
-    const dashboardData = {
-      stats: {
-        lessons: lessonsCount,
-        homework: homeworkCount,
-        tests: testsCount,
-        totalResources: lessonsCount + homeworkCount + testsCount
-      },
-      recentActivity
-    };
-
-    res.status(200).json({
-      message: 'Admin dashboard data fetched successfully',
-      data: dashboardData
-    });
-  } catch (error) {
-    console.error('Error fetching admin dashboard:', error);
-    res.status(500).json({
-      error: 'Failed to fetch admin dashboard data'
-    });
-  }
-});
+adminRouter.use("/dashboard", dashboardRouter);
+adminRouter.use("/students", studentsRouter);
+adminRouter.use("/enrollment-requests", enrollmentRequestsRouter);
 
 export default adminRouter;

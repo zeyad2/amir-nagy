@@ -1,70 +1,110 @@
-import React from 'react';
+import { Link } from 'react-router-dom'
+import { Mail, Phone, MapPin } from 'lucide-react'
 
-const Footer = () => {
+export default function Footer() {
+  const currentYear = new Date().getFullYear()
+
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* About Section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">SAT Learning Platform</h3>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              Comprehensive SAT preparation with Mr. Amir Nagy. 
-              Achieve your target score with our proven teaching methods 
-              and personalized learning approach.
+    <footer className="bg-gray-900 text-gray-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-8 h-8 bg-sat-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="text-xl font-bold text-white">SAT Platform</span>
+            </div>
+            <p className="text-gray-400 mb-4 max-w-md">
+              Master SAT preparation with expert guidance from Mr. Amir Nagy.
+              Comprehensive courses, personalized learning, and proven results.
             </p>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4" />
+                <span>amir.nagy@example.com</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Phone className="h-4 w-4" />
+                <span>+20 123 456 7890</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4" />
+                <span>Cairo, Egypt</span>
+              </div>
+              <div className="mt-4">
+                <span className="block font-medium text-white">Office Hours:</span>
+                <span className="block">Sunday - Thursday: 9:00 AM - 6:00 PM</span>
+                <span className="block">Friday: 9:00 AM - 2:00 PM</span>
+              </div>
+            </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-white font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/" className="text-gray-300 hover:text-white transition-colors">
+                <Link to="/" className="hover:text-white transition-colors">
                   Home
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#courses" className="text-gray-300 hover:text-white transition-colors">
+                <Link to="/courses" className="hover:text-white transition-colors">
                   Courses
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#about" className="text-gray-300 hover:text-white transition-colors">
+                <Link to="/about" className="hover:text-white transition-colors">
                   About
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#contact" className="text-gray-300 hover:text-white transition-colors">
+                <Link to="/contact" className="hover:text-white transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-            <div className="text-sm text-gray-300 space-y-2">
-              <p>Email: amir.nagy@example.com</p>
-              <p>Phone: +20 XXX XXX XXXX</p>
-              <p className="mt-4">
-                <span className="block font-medium">Office Hours:</span>
-                <span className="block">Sunday - Thursday: 9:00 AM - 6:00 PM</span>
-                <span className="block">Friday: 9:00 AM - 2:00 PM</span>
-              </p>
-            </div>
+            <h3 className="text-white font-semibold mb-4">Support</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/help" className="hover:text-white transition-colors">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-white transition-colors">
+                  FAQ
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} SAT Learning Platform by Mr. Amir Nagy. All rights reserved.
+            © {currentYear} SAT Platform by Mr. Amir Nagy. All rights reserved.
           </p>
+          <div className="flex space-x-6 mt-4 md:mt-0">
+            <span className="text-sm text-gray-400">Made with ❤️ for students</span>
+          </div>
         </div>
       </div>
     </footer>
-  );
-};
-
-export default Footer;
+  )
+}

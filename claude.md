@@ -829,3 +829,5 @@ For each feature, document:
 - [ ] No TypeScript used anywhere
 - [ ] All phases completed with detailed testing
 - the project is running on localhost:3000 everything is installed
+- the server is running on port 5000 and the frontend is running on port 3000, cors is setup and working. no need to run anything just use the existing processes.
+- serena onboarding has been performed
