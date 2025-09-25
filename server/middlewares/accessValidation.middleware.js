@@ -171,10 +171,11 @@ export const validateCourseAccess = async (req, res, next) => {
 };
 
 /**
- * Helper function to check if a session is accessible based on access windows
- * @param {Object} session - The session to check
- * @param {Object} enrollment - The enrollment with access windows
- * @returns {boolean} - Whether the session is accessible
+ * Determine whether a session falls within the enrollment's access windows.
+ *
+ * @param {Object} session - Session object; must include a `date` field (ISO string or Date).
+ * @param {Object} enrollment - Enrollment object that may include `accessWindows`, an array of objects with `startSession.date` and `endSession.date`.
+ * @returns {boolean} `true` if the enrollment has no access windows or the session date is within any access window, `false` otherwise.
  */
 async function checkSessionAccess(session, enrollment) {
   // If no access windows, student has full access (for finished courses or full access live courses)
