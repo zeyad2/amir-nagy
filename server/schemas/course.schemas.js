@@ -48,9 +48,6 @@ export const updateCourseSchema = Joi.object({
     'number.base': 'Price must be a number',
     'number.integer': 'Price must be an integer',
     'number.min': 'Price cannot be negative'
-  }),
-  status: Joi.string().valid('draft', 'published', 'archived').messages({
-    'any.only': 'Course status must be "draft", "published", or "archived"'
   })
 }).min(1).messages({
   'object.min': 'At least one field must be provided for update'
@@ -58,6 +55,13 @@ export const updateCourseSchema = Joi.object({
 
 export const courseIdSchema = Joi.object({
   id: Joi.string().pattern(/^\d+$/).required().messages({
+    'string.pattern.base': 'Course ID must be a valid number',
+    'any.required': 'Course ID is required'
+  })
+});
+
+export const courseIdParamSchema = Joi.object({
+  courseId: Joi.string().pattern(/^\d+$/).required().messages({
     'string.pattern.base': 'Course ID must be a valid number',
     'any.required': 'Course ID is required'
   })

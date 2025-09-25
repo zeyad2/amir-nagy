@@ -120,7 +120,7 @@ export const getCourse = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const course = await Prisma.course.findUnique({
+    const course = await Prisma.course.findFirst({
       where: {
         id: BigInt(id),
         deletedAt: null
@@ -293,10 +293,10 @@ export const createCourse = async (req, res) => {
 export const updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const { status, ...updateData } = req.body; // Strip status from update data
 
     // Check if course exists and is not deleted
-    const existingCourse = await Prisma.course.findUnique({
+    const existingCourse = await Prisma.course.findFirst({
       where: {
         id: BigInt(id),
         deletedAt: null
@@ -309,7 +309,7 @@ export const updateCourse = async (req, res) => {
 
     const course = await Prisma.course.update({
       where: { id: BigInt(id) },
-      data: updateData
+      data: updateData // Status is now excluded
     });
 
     // Convert BigInt to string for JSON serialization
@@ -345,7 +345,7 @@ export const deleteCourse = async (req, res) => {
     const { id } = req.params;
 
     // Check if course exists and get enrollment information
-    const course = await Prisma.course.findUnique({
+    const course = await Prisma.course.findFirst({
       where: {
         id: BigInt(id),
         deletedAt: null
@@ -405,7 +405,7 @@ export const updateCourseStatus = async (req, res) => {
     const { status } = req.body;
 
     // Check if course exists
-    const existingCourse = await Prisma.course.findUnique({
+    const existingCourse = await Prisma.course.findFirst({
       where: {
         id: BigInt(id),
         deletedAt: null

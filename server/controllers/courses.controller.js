@@ -18,7 +18,7 @@ export const getCourseAccessStatus = async (req, res) => {
 
     // Admin users have full access to everything
     if (userRole === 'admin') {
-      const course = await Prisma.course.findUnique({
+      const course = await Prisma.course.findFirst({
         where: {
           id: BigInt(courseId),
           deletedAt: null
@@ -54,7 +54,7 @@ export const getCourseAccessStatus = async (req, res) => {
     // For students, check enrollment and access windows
     if (userRole === 'student') {
       // Get the course
-      const course = await Prisma.course.findUnique({
+      const course = await Prisma.course.findFirst({
         where: {
           id: BigInt(courseId),
           deletedAt: null
@@ -80,12 +80,10 @@ export const getCourseAccessStatus = async (req, res) => {
       }
 
       // Check enrollment
-      const enrollment = await Prisma.enrollment.findUnique({
+      const enrollment = await Prisma.enrollment.findFirst({
         where: {
-          studentId_courseId: {
-            studentId: student.uuid,
-            courseId: BigInt(courseId)
-          },
+          studentId: student.uuid,
+          courseId: BigInt(courseId),
           deletedAt: null
         },
         include: {

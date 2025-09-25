@@ -17,7 +17,6 @@ import {
   createCourseSchema,
   updateCourseSchema,
   courseIdSchema,
-  courseIdParamSchema,
   courseQuerySchema,
   updateCourseStatusSchema
 } from "../../schemas/course.schemas.js";
@@ -59,12 +58,13 @@ coursesRouter.delete('/:id',
 coursesRouter.patch('/:id/status',
   validateParams(courseIdSchema),
   validateSchema(updateCourseStatusSchema),
-  updateCourseStatus
+  updateCourseStatus,
+  getCourseSessions
 );
 
 // GET /api/admin/courses/:courseId/sessions - Get sessions for a course (for access window dropdowns)
 coursesRouter.get('/:courseId/sessions',
-  validateParams(courseIdParamSchema),
+  validateParams(courseIdSchema),
   getCourseSessions
 );
 export default coursesRouter;

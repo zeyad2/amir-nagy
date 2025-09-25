@@ -14,7 +14,7 @@ export const getAccessWindows = async (req, res) => {
     const { enrollmentId } = req.params;
 
     // Check if enrollment exists
-    const enrollment = await Prisma.enrollment.findUnique({
+    const enrollment = await Prisma.enrollment.findFirst({
       where: {
         id: BigInt(enrollmentId),
         deletedAt: null
@@ -162,8 +162,23 @@ export const getAccessWindow = async (req, res) => {
 
     const startIndex = allSessions.findIndex(s => s.id === accessWindow.startSessionId);
     const endIndex = allSessions.findIndex(s => s.id === accessWindow.endSessionId);
+
+    // Guard against missing sessions
+    if (startIndex === -1) {
+      return createErrorResponse(res, 404, 'Start session not found in course sessions');
+    }
+
+    if (endIndex === -1) {
+      return createErrorResponse(res, 404, 'End session not found in course sessions');
+    }
+
     const sessionCount = endIndex - startIndex + 1;
     const totalSessions = allSessions.length;
+
+    // Ensure sessionCount is non-negative
+    if (sessionCount < 0) {
+      return createErrorResponse(res, 409, 'Invalid session range: start session is after end session');
+    }
 
     // Note: Pricing is handled separately - live courses use offline payment,
     // finished courses have full access without access windows
@@ -217,7 +232,7 @@ export const createAccessWindow = async (req, res) => {
     const { startSessionId, endSessionId } = req.body;
 
     // Check if enrollment exists and get course info
-    const enrollment = await Prisma.enrollment.findUnique({
+    const enrollment = await Prisma.enrollment.findFirst({
       where: {
         id: BigInt(enrollmentId),
         deletedAt: null
@@ -254,37 +269,40 @@ export const createAccessWindow = async (req, res) => {
       return createErrorResponse(res, 400, 'Start session cannot be after end session');
     }
 
-    // Check for overlapping access windows for this enrollment
-    const existingWindows = await Prisma.accessWindow.findMany({
-      where: {
-        enrollmentId: BigInt(enrollmentId)
-      },
-      include: {
-        startSession: true,
-        endSession: true
-      }
-    });
+    // Use transaction to prevent race conditions in overlap checking
+    const accessWindow = await Prisma.$transaction(async (tx) => {
+      // Re-check for overlapping access windows within transaction
+      const existingWindows = await tx.accessWindow.findMany({
+        where: {
+          enrollmentId: BigInt(enrollmentId)
+        },
+        include: {
+          startSession: true,
+          endSession: true
+        }
+      });
 
-    for (const window of existingWindows) {
-      // Check if new window overlaps with existing ones
-      if (
-        (startSession.date <= window.endSession.date && endSession.date >= window.startSession.date)
-      ) {
-        return createErrorResponse(res, 400, 'Access window overlaps with existing window');
+      for (const window of existingWindows) {
+        // Check if new window overlaps with existing ones
+        if (
+          (startSession.date <= window.endSession.date && endSession.date >= window.startSession.date)
+        ) {
+          throw new Error('Access window overlaps with existing window');
+        }
       }
-    }
 
-    // Create the access window
-    const accessWindow = await Prisma.accessWindow.create({
-      data: {
-        enrollmentId: BigInt(enrollmentId),
-        startSessionId: BigInt(startSessionId),
-        endSessionId: BigInt(endSessionId)
-      },
-      include: {
-        startSession: true,
-        endSession: true
-      }
+      // Create the access window within transaction
+      return await tx.accessWindow.create({
+        data: {
+          enrollmentId: BigInt(enrollmentId),
+          startSessionId: BigInt(startSessionId),
+          endSessionId: BigInt(endSessionId)
+        },
+        include: {
+          startSession: true,
+          endSession: true
+        }
+      });
     });
 
     // Convert BigInt to string for JSON serialization
@@ -307,6 +325,9 @@ export const createAccessWindow = async (req, res) => {
     return createResponse(res, 201, 'Access window created successfully', { accessWindow: accessWindowResponse });
   } catch (error) {
     console.error('Error creating access window:', error);
+    if (error.message === 'Access window overlaps with existing window') {
+      return createErrorResponse(res, 400, error.message);
+    }
     return createErrorResponse(res, 500, 'Failed to create access window');
   }
 };
@@ -361,36 +382,48 @@ export const updateAccessWindow = async (req, res) => {
         return createErrorResponse(res, 400, 'Start session cannot be after end session');
       }
 
-      // Check for overlapping access windows (excluding current window)
-      const otherWindows = await Prisma.accessWindow.findMany({
-        where: {
-          enrollmentId: existingWindow.enrollmentId,
-          id: { not: BigInt(id) }
-        },
+      if (startSessionId) updateData.startSessionId = newStartId;
+      if (endSessionId) updateData.endSessionId = newEndId;
+    }
+
+    // Update the access window within transaction to prevent race conditions
+    const updatedWindow = await Prisma.$transaction(async (tx) => {
+      // Re-check for overlapping access windows within transaction (excluding current window)
+      if (startSessionId || endSessionId) {
+        const newStartId = startSessionId ? BigInt(startSessionId) : existingWindow.startSessionId;
+        const newEndId = endSessionId ? BigInt(endSessionId) : existingWindow.endSessionId;
+
+        const [startSession, endSession] = await Promise.all([
+          tx.session.findUnique({ where: { id: newStartId } }),
+          tx.session.findUnique({ where: { id: newEndId } })
+        ]);
+
+        const otherWindows = await tx.accessWindow.findMany({
+          where: {
+            enrollmentId: existingWindow.enrollmentId,
+            id: { not: BigInt(id) }
+          },
+          include: {
+            startSession: true,
+            endSession: true
+          }
+        });
+
+        for (const window of otherWindows) {
+          if (startSession.date <= window.endSession.date && endSession.date >= window.startSession.date) {
+            throw new Error('Access window overlaps with existing window');
+          }
+        }
+      }
+
+      return await tx.accessWindow.update({
+        where: { id: BigInt(id) },
+        data: updateData,
         include: {
           startSession: true,
           endSession: true
         }
       });
-
-      for (const window of otherWindows) {
-        if (startSession.date <= window.endSession.date && endSession.date >= window.startSession.date) {
-          return createErrorResponse(res, 400, 'Access window overlaps with existing window');
-        }
-      }
-
-      if (startSessionId) updateData.startSessionId = newStartId;
-      if (endSessionId) updateData.endSessionId = newEndId;
-    }
-
-    // Update the access window
-    const updatedWindow = await Prisma.accessWindow.update({
-      where: { id: BigInt(id) },
-      data: updateData,
-      include: {
-        startSession: true,
-        endSession: true
-      }
     });
 
     // Convert BigInt to string for JSON serialization
@@ -413,6 +446,9 @@ export const updateAccessWindow = async (req, res) => {
     return createResponse(res, 200, 'Access window updated successfully', { accessWindow: accessWindowResponse });
   } catch (error) {
     console.error('Error updating access window:', error);
+    if (error.message === 'Access window overlaps with existing window') {
+      return createErrorResponse(res, 400, error.message);
+    }
     return createErrorResponse(res, 500, 'Failed to update access window');
   }
 };
@@ -455,7 +491,7 @@ export const getCourseSessions = async (req, res) => {
     const { courseId } = req.params;
 
     // Check if course exists
-    const course = await Prisma.course.findUnique({
+    const course = await Prisma.course.findFirst({
       where: {
         id: BigInt(courseId),
         deletedAt: null

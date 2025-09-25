@@ -32,6 +32,6 @@ adminRouter.use("/courses", coursesRouter);
 adminRouter.use("/dashboard", dashboardRouter);
 adminRouter.use("/students", studentsRouter);
 adminRouter.use("/enrollment-requests", enrollmentRequestsRouter);
-adminRouter.use("/access-windows", accessWindowsRouter);
+adminRouter.use("/", accessWindowsRouter);
 
 export default adminRouter;

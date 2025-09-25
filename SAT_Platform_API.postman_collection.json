@@ -1616,8 +1616,9 @@
                   "pm.test('Course details returned', function () {",
                   "    const responseJson = pm.response.json();",
                   "    pm.expect(responseJson.data).to.have.property('course');",
-                  "    pm.expect(responseJson.data.course).to.have.property('enrollments');",
-                  "    pm.expect(responseJson.data.course).to.have.property('sessions');",
+                  "    pm.expect(responseJson.data.course).to.have.property('enrolledStudents');",
+                  "    pm.expect(responseJson.data.course).to.have.property('content');",
+                  "    pm.expect(responseJson.data.course.content).to.have.property('lessons');",
                   "});"
                 ],
                 "type": "text/javascript"
