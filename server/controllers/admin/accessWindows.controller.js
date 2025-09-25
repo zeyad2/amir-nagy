@@ -127,8 +127,7 @@ export const getAccessWindow = async (req, res) => {
               select: {
                 id: true,
                 title: true,
-                type: true,
-                price: true
+                type: true
               }
             },
             student: {
@@ -166,11 +165,8 @@ export const getAccessWindow = async (req, res) => {
     const sessionCount = endIndex - startIndex + 1;
     const totalSessions = allSessions.length;
 
-    // Calculate proportional price (if course has a price)
-    let calculatedPrice = null;
-    if (accessWindow.enrollment.course.price && totalSessions > 0) {
-      calculatedPrice = Math.round((accessWindow.enrollment.course.price * sessionCount) / totalSessions);
-    }
+    // Note: Pricing is handled separately - live courses use offline payment,
+    // finished courses have full access without access windows
 
     // Convert BigInt to string for JSON serialization
     const accessWindowResponse = {
@@ -189,14 +185,12 @@ export const getAccessWindow = async (req, res) => {
       createdAt: accessWindow.createdAt,
       sessionCount,
       totalSessions,
-      calculatedPrice,
       enrollment: {
         id: accessWindow.enrollment.id.toString(),
         course: {
           id: accessWindow.enrollment.course.id.toString(),
           title: accessWindow.enrollment.course.title,
-          type: accessWindow.enrollment.course.type,
-          price: accessWindow.enrollment.course.price
+          type: accessWindow.enrollment.course.type
         },
         student: {
           firstName: accessWindow.enrollment.student.firstName,
