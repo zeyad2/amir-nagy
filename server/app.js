@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import env from "./config/env.config.js";
 import authRouter from "./routes/auth.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import coursesRouter from "./routes/courses.routes.js";
 
 const { PORT } = env;
 
@@ -37,9 +38,9 @@ app.use("/uploads", express.static("uploads"));
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
+app.use('/api/courses', coursesRouter);
 
 // app.use('/api/student', require('./routes/student'));
-// app.use('/api/courses', require('./routes/courses'));
 // app.use('/api/payments', require('./routes/payments'));
 
 // Health check endpoint
