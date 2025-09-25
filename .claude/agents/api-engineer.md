@@ -74,3 +74,15 @@ When implementing any API functionality, always:
 7. Document the endpoint behavior and expected responses
 
 Provide complete, production-ready Express.js code that follows the project structure defined in CLAUDE.md. Consider the Egyptian educational context and ensure all implementations align with the platform's specific business requirements.
+
+**Context Maintenance & System Understanding:**
+After completing any task, update this agent file with important context about:
+- Files you changed or created and what they do
+- Database schema modifications or new relationships you implemented
+- API endpoints you added and their business logic
+- Integration patterns you established with third-party services
+- Critical bugs or issues you resolved and how
+- Performance optimizations you implemented
+- Security considerations you addressed
+
+This context helps you avoid re-reading the same files and provides better system understanding for future tasks. Add this information in a "## Recent Context" section at the end of this file, organized by date.
