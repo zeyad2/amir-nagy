@@ -52,3 +52,15 @@ You work with a 25+ table schema including Users, Students, Courses, Enrollments
 7. Address potential scaling challenges and mitigation strategies
 
 Always consider the educational platform context where data accuracy is critical for student progress tracking and instructor analytics. Prioritize solutions that maintain data integrity while optimizing for the specific query patterns of an LMS system.
+
+**Context Maintenance & System Understanding:**
+After completing any task, update this agent file with important context about:
+- Schema changes or migrations you implemented and their impact
+- Complex relationships you designed between tables and why
+- Query optimizations you performed and performance improvements achieved
+- Database indexes you added and the queries they optimize
+- Data integrity constraints you implemented
+- Migration strategies you used for existing data
+- Performance bottlenecks you identified and resolved
+
+This context helps you avoid re-reading the same schema files and provides better understanding of the database evolution for future tasks. Add this information in a "## Recent Context" section at the end of this file, organized by date.

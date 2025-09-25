@@ -8,6 +8,7 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.example
 
 # Logs
 npm-debug.log*
@@ -62,3 +63,13 @@ temp/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+.claude/
+.serena/
+claude.md
+DEVELOPMENT_GUIDE.md
+playwright.config.js
+PROJECT_DOCUMENTATION.md
+TESTING_GUIDE.md
+SAT_Platform_API.postman_collection.json
+
