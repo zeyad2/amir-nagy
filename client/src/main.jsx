@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
 import './styles/globals.css'
+import { registerServiceWorker } from './utils/serviceWorker'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,3 +35,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </React.StrictMode>
 )
+
+// Register service worker for PWA functionality
+registerServiceWorker()

@@ -5,7 +5,8 @@
 import { Router } from "express";
 import {
   getCourseAccessStatus,
-  getAccessibleCourseSessions
+  getAccessibleCourseSessions,
+  validateSessionContentAccess
 } from "../controllers/courses.controller.js";
 import { validateParams } from "../middlewares/validation.middleware.js";
 import { requireUser } from "../middlewares/requireUser.js";
@@ -25,6 +26,12 @@ coursesRouter.get('/:id/accessible-sessions',
   requireUser, // Require authentication
   validateParams(courseIdSchema),
   getAccessibleCourseSessions
+);
+
+// GET /api/courses/:courseId/sessions/:sessionId/access - Validate access to specific session content
+coursesRouter.get('/:courseId/sessions/:sessionId/access',
+  requireUser, // Require authentication
+  validateSessionContentAccess
 );
 
 export default coursesRouter;

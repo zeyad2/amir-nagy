@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, Outlet } from 'react-router-dom'
 import { useAuth } from '@/utils/AuthContext'
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import Footer from '../common/Footer'
+import NotificationCenter from '../admin/NotificationCenter'
+import AdminBreadcrumb from '../admin/AdminBreadcrumb'
+import QuickActions from '../admin/QuickActions'
+import ThemeToggle from '../admin/ThemeToggle'
 import {
   Home,
   BookOpen,
@@ -14,13 +18,64 @@ import {
   Menu,
   User,
   LogOut,
-  Settings
+  Settings,
+  MoreHorizontal,
+  ArrowLeft,
+  Plus
 } from 'lucide-react'
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
   const { user, logout } = useAuth()
   const location = useLocation()
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Keyboard navigation support
+  const sidebarRef = useRef(null)
+  const mainContentRef = useRef(null)
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Alt + S to focus sidebar
+      if (e.altKey && e.key === 's') {
+        e.preventDefault()
+        if (sidebarRef.current) {
+          const firstLink = sidebarRef.current.querySelector('a')
+          if (firstLink) firstLink.focus()
+        }
+      }
+
+      // Alt + M to focus main content
+      if (e.altKey && e.key === 'm') {
+        e.preventDefault()
+        if (mainContentRef.current) {
+          mainContentRef.current.focus()
+        }
+      }
+
+      // Escape to close mobile sidebar
+      if (e.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [sidebarOpen])
 
   const sidebarItems = [
     {
@@ -62,8 +117,103 @@ export default function AdminLayout() {
     return location.pathname.startsWith(href)
   }
 
+  // Mobile Bottom Tab Bar Component
+  const MobileBottomTabs = () => (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden">
+      <div className="flex items-center justify-around py-2 px-1">
+        {/* Main navigation items (first 4) */}
+        {sidebarItems.slice(0, 4).map((item) => {
+          const isActive = isActiveRoute(item.href)
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`flex flex-col items-center justify-center p-2 rounded-lg min-w-0 flex-1 text-center transition-colors ${
+                isActive
+                  ? 'text-sat-primary bg-blue-50'
+                  : 'text-gray-600 hover:text-sat-primary hover:bg-gray-50'
+              }`}
+              style={{ minHeight: '44px' }} // Touch-friendly minimum height
+            >
+              <item.icon className={`h-5 w-5 mb-1 ${isActive ? 'text-sat-primary' : 'text-gray-500'}`} />
+              <span className="text-xs font-medium truncate w-full">{item.name}</span>
+            </Link>
+          )
+        })}
+
+        {/* More menu for additional items */}
+        <div className="relative flex-1">
+          <button
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            className={`flex flex-col items-center justify-center p-2 rounded-lg w-full text-center transition-colors ${
+              showMoreMenu || location.pathname.startsWith('/admin/reports')
+                ? 'text-sat-primary bg-blue-50'
+                : 'text-gray-600 hover:text-sat-primary hover:bg-gray-50'
+            }`}
+            style={{ minHeight: '44px' }}
+          >
+            <MoreHorizontal className="h-5 w-5 mb-1 text-gray-500" />
+            <span className="text-xs font-medium">More</span>
+          </button>
+
+          {/* More menu dropdown */}
+          {showMoreMenu && (
+            <div className="absolute bottom-full mb-2 right-0 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+              {/* Reports - if not in main tabs */}
+              {sidebarItems.slice(4).map((item) => {
+                const isActive = isActiveRoute(item.href)
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setShowMoreMenu(false)}
+                    className={`flex items-center space-x-3 px-4 py-3 transition-colors ${
+                      isActive
+                        ? 'bg-sat-primary text-white'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-sat-primary'
+                    }`}
+                  >
+                    <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                    <div>
+                      <div className={`font-medium ${isActive ? 'text-white' : 'text-gray-900'}`}>
+                        {item.name}
+                      </div>
+                      <div className={`text-xs ${isActive ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {item.description}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+
+              <Separator className="my-2" />
+
+              {/* Settings */}
+              <button className="flex items-center space-x-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-100 hover:text-sat-primary transition-colors">
+                <Settings className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">Settings</span>
+              </button>
+
+              {/* Logout */}
+              <button
+                onClick={() => {
+                  logout()
+                  setShowMoreMenu(false)
+                }}
+                className="flex items-center space-x-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">Sign out</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
   const SidebarContent = ({ onItemClick = () => {} }) => (
-    <div className="flex flex-col h-full">
+    <div ref={sidebarRef} className="flex flex-col h-full">
       {/* Logo/Header */}
       <div className="p-6 border-b border-gray-200">
         <Link
@@ -90,7 +240,7 @@ export default function AdminLayout() {
               key={item.name}
               to={item.href}
               onClick={onItemClick}
-              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group ${
+              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group focus:outline-none focus:ring-2 focus:ring-sat-primary focus:ring-offset-2 ${
                 isActive
                   ? 'bg-sat-primary text-white'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-sat-primary'
@@ -135,7 +285,7 @@ export default function AdminLayout() {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-gray-700 hover:text-sat-primary hover:bg-gray-100"
+            className="w-full justify-start text-gray-700 hover:text-sat-primary hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-sat-primary"
           >
             <Settings className="h-4 w-4 mr-2" />
             Settings
@@ -144,7 +294,7 @@ export default function AdminLayout() {
             variant="ghost"
             size="sm"
             onClick={logout}
-            className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50"
+            className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Sign out
@@ -155,7 +305,15 @@ export default function AdminLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
+      {/* Click outside handler for mobile more menu */}
+      {showMoreMenu && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          onClick={() => setShowMoreMenu(false)}
+          aria-hidden="true"
+        />
+      )}
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-80 lg:flex-col lg:z-40">
         <div className="flex flex-col flex-grow bg-white shadow-lg">
@@ -166,20 +324,41 @@ export default function AdminLayout() {
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <div className="lg:hidden">
-          {/* Mobile Header */}
+          {/* Mobile Header - Touch Optimized */}
           <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-sat-primary rounded flex items-center justify-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-sat-primary rounded flex items-center justify-center">
                 <span className="text-white font-bold text-sm">S</span>
               </div>
-              <span className="font-bold text-gray-900">Admin Panel</span>
+              <div>
+                <span className="font-bold text-gray-900 text-lg">Admin</span>
+                <div className="text-xs text-gray-500">SAT Platform</div>
+              </div>
             </div>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open navigation menu</span>
-              </Button>
-            </SheetTrigger>
+
+            <div className="flex items-center gap-1">
+              {/* Touch-friendly notification center */}
+              <div className="p-2 hover:bg-gray-100 rounded-lg transition-colors" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <NotificationCenter />
+              </div>
+
+              {/* Touch-friendly quick actions */}
+              <div className="p-2 hover:bg-gray-100 rounded-lg transition-colors" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <QuickActions />
+              </div>
+
+              {/* Touch-friendly menu button */}
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="p-3 focus:outline-none focus:ring-2 focus:ring-sat-primary hover:bg-gray-100"
+                  style={{ minHeight: '44px', minWidth: '44px' }}
+                >
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open navigation menu</span>
+                </Button>
+              </SheetTrigger>
+            </div>
           </div>
         </div>
 
@@ -188,17 +367,50 @@ export default function AdminLayout() {
         </SheetContent>
       </Sheet>
 
+      {/* Desktop Header */}
+      <div className="hidden lg:block lg:pl-80">
+        <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              {/* Keyboard shortcuts hint */}
+              <span className="hidden xl:inline">
+                Press <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">Alt + S</kbd> to focus sidebar,
+                <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded ml-1">Alt + M</kbd> for main content
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <NotificationCenter />
+              <ThemeToggle />
+              <QuickActions />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Container */}
       <div className="flex-1 lg:pl-80 flex flex-col">
-        <main className="flex-1">
-          <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <main
+          ref={mainContentRef}
+          className="flex-1 focus:outline-none"
+          tabIndex={-1}
+          role="main"
+          aria-label="Main content"
+        >
+          <div className="px-4 py-6 sm:px-6 lg:px-8 pb-20 md:pb-6">
+            <AdminBreadcrumb />
             <Outlet />
           </div>
         </main>
 
-        {/* Footer */}
-        <Footer />
+        {/* Footer - hidden on mobile to make room for bottom tabs */}
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </div>
+
+      {/* Mobile Bottom Tab Navigation */}
+      <MobileBottomTabs />
     </div>
   )
 }
