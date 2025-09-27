@@ -23,6 +23,8 @@ import PerformancePage from '@/pages/student/PerformancePage'
 import AdminLayout from '@/components/layouts/AdminLayout'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminCourses from '@/pages/admin/AdminCourses'
+import CourseDetailsPage from '@/pages/admin/CourseDetailsPage'
+import CreateCourse from '@/pages/admin/CreateCourse'
 import AdminStudents from '@/pages/admin/AdminStudents'
 import AdminResources from '@/pages/admin/AdminResources'
 import AdminReports from '@/pages/admin/AdminReports'
@@ -130,6 +132,9 @@ export function AppRouter() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="courses" element={<AdminCourses />} />
+        <Route path="courses/:id" element={<CourseDetailsPage />} />
+        <Route path="courses/:id/edit" element={<CourseDetailsPage />} />
+        <Route path="courses/create" element={<CreateCourse />} />
         <Route path="students" element={<AdminStudents />} />
         <Route path="resources" element={<AdminResources />} />
         <Route path="reports" element={<AdminReports />} />

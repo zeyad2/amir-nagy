@@ -518,3 +518,312 @@ export const getCourseSessions = async (req, res) => {
     return createErrorResponse(res, 500, 'Failed to fetch course sessions');
   }
 };
+
+/**
+ * Assign content (lessons, homework, tests) to a course
+ * POST /api/admin/courses/:id/content
+ */
+export const assignContent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, contentIds, dueDates } = req.body;
+
+    if (!type || !contentIds || !Array.isArray(contentIds)) {
+      return createErrorResponse(res, 400, 'Invalid request. Expected type and contentIds array');
+    }
+
+    // Validate due dates for homework and tests
+    if ((type === 'homework' || type === 'tests') && dueDates) {
+      for (const contentId of contentIds) {
+        if (dueDates[contentId]) {
+          const dueDate = new Date(dueDates[contentId]);
+          if (isNaN(dueDate.getTime()) || dueDate < new Date()) {
+            return createErrorResponse(res, 400, `Invalid due date for ${type} ${contentId}. Date must be in the future.`);
+          }
+        }
+      }
+    }
+
+    const validTypes = ['lessons', 'homework', 'tests'];
+    if (!validTypes.includes(type)) {
+      return createErrorResponse(res, 400, 'Invalid content type. Must be one of: lessons, homework, tests');
+    }
+
+    // Check if course exists
+    const course = await Prisma.course.findFirst({
+      where: {
+        id: BigInt(id),
+        deletedAt: null
+      }
+    });
+
+    if (!course) {
+      return createErrorResponse(res, 404, 'Course not found');
+    }
+
+    const courseId = BigInt(id);
+
+    // Prepare data for creating associations
+    let createData = [];
+
+    if (type === 'lessons') {
+      // Check if lessons exist
+      const lessons = await Prisma.lesson.findMany({
+        where: {
+          id: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      if (lessons.length !== contentIds.length) {
+        return createErrorResponse(res, 400, 'One or more lessons not found');
+      }
+
+      // Get existing associations to avoid duplicates
+      const existing = await Prisma.courseLesson.findMany({
+        where: {
+          courseId,
+          lessonId: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      const existingLessonIds = existing.map(cl => cl.lessonId.toString());
+      const newLessonIds = contentIds.filter(id => !existingLessonIds.includes(id));
+
+      createData = newLessonIds.map((lessonId, index) => ({
+        courseId,
+        lessonId: BigInt(lessonId),
+        order: existing.length + index + 1
+      }));
+
+      if (createData.length > 0) {
+        await Prisma.courseLesson.createMany({
+          data: createData
+        });
+      }
+
+    } else if (type === 'homework') {
+      // Check if homework exists
+      const homework = await Prisma.homework.findMany({
+        where: {
+          id: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      if (homework.length !== contentIds.length) {
+        return createErrorResponse(res, 400, 'One or more homework not found');
+      }
+
+      // Get existing associations to avoid duplicates
+      const existing = await Prisma.courseHomework.findMany({
+        where: {
+          courseId,
+          homeworkId: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      const existingHomeworkIds = existing.map(ch => ch.homeworkId.toString());
+      const newHomeworkIds = contentIds.filter(id => !existingHomeworkIds.includes(id));
+
+      createData = newHomeworkIds.map(homeworkId => {
+        const dueDate = dueDates && dueDates[homeworkId]
+          ? new Date(dueDates[homeworkId])
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default: 7 days from now
+
+        return {
+          courseId,
+          homeworkId: BigInt(homeworkId),
+          dueDate
+        };
+      });
+
+      if (createData.length > 0) {
+        await Prisma.courseHomework.createMany({
+          data: createData
+        });
+      }
+
+    } else if (type === 'tests') {
+      // Check if tests exist
+      const tests = await Prisma.test.findMany({
+        where: {
+          id: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      if (tests.length !== contentIds.length) {
+        return createErrorResponse(res, 400, 'One or more tests not found');
+      }
+
+      // Get existing associations to avoid duplicates
+      const existing = await Prisma.courseTest.findMany({
+        where: {
+          courseId,
+          testId: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      const existingTestIds = existing.map(ct => ct.testId.toString());
+      const newTestIds = contentIds.filter(id => !existingTestIds.includes(id));
+
+      createData = newTestIds.map(testId => {
+        const dueDate = dueDates && dueDates[testId]
+          ? new Date(dueDates[testId])
+          : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // Default: 14 days from now
+
+        return {
+          courseId,
+          testId: BigInt(testId),
+          dueDate
+        };
+      });
+
+      if (createData.length > 0) {
+        await Prisma.courseTest.createMany({
+          data: createData
+        });
+      }
+    }
+
+    const assignedCount = createData.length;
+    const skippedCount = contentIds.length - assignedCount;
+
+    let message = `${assignedCount} ${type} assigned successfully`;
+    if (skippedCount > 0) {
+      message += ` (${skippedCount} already assigned)`;
+    }
+
+    return createResponse(res, 200, message, {
+      assigned: assignedCount,
+      skipped: skippedCount,
+      total: contentIds.length
+    });
+
+  } catch (error) {
+    console.error('Error assigning content:', error);
+    return createErrorResponse(res, 500, 'Failed to assign content');
+  }
+};
+
+/**
+ * Remove content from a course
+ * DELETE /api/admin/courses/:id/content/:contentId
+ */
+export const removeContent = async (req, res) => {
+  try {
+    const { id, contentId } = req.params;
+    const { type } = req.query;
+
+    console.log('Remove content request:', { courseId: id, contentId, type });
+
+    if (!type) {
+      return createErrorResponse(res, 400, 'Content type is required as a query parameter');
+    }
+
+    const validTypes = ['lesson', 'homework', 'test'];
+    if (!validTypes.includes(type)) {
+      return createErrorResponse(res, 400, 'Invalid content type. Must be one of: lesson, homework, test');
+    }
+
+    // Validate contentId can be converted to BigInt
+    try {
+      BigInt(contentId);
+    } catch (err) {
+      console.error('Invalid contentId format:', contentId, err);
+      return createErrorResponse(res, 400, `Invalid contentId format: ${contentId}`);
+    }
+
+    // Check if course exists
+    const course = await Prisma.course.findFirst({
+      where: {
+        id: BigInt(id),
+        deletedAt: null
+      }
+    });
+
+    if (!course) {
+      return createErrorResponse(res, 404, 'Course not found');
+    }
+
+    const courseIdBigInt = BigInt(id);
+    const contentIdBigInt = BigInt(contentId);
+
+    let deleteResult;
+
+    if (type === 'lesson') {
+      // First check if the association exists
+      const existing = await Prisma.courseLesson.findFirst({
+        where: {
+          courseId: courseIdBigInt,
+          lessonId: contentIdBigInt
+        }
+      });
+
+      console.log('Existing courseLesson:', existing);
+
+      if (!existing) {
+        return createErrorResponse(res, 404, `Lesson ${contentId} not found in course ${id}`);
+      }
+
+      deleteResult = await Prisma.courseLesson.deleteMany({
+        where: {
+          courseId: courseIdBigInt,
+          lessonId: contentIdBigInt
+        }
+      });
+    } else if (type === 'homework') {
+      // First check if the association exists
+      const existing = await Prisma.courseHomework.findFirst({
+        where: {
+          courseId: courseIdBigInt,
+          homeworkId: contentIdBigInt
+        }
+      });
+
+      console.log('Existing courseHomework:', existing);
+
+      if (!existing) {
+        return createErrorResponse(res, 404, `Homework ${contentId} not found in course ${id}`);
+      }
+
+      deleteResult = await Prisma.courseHomework.deleteMany({
+        where: {
+          courseId: courseIdBigInt,
+          homeworkId: contentIdBigInt
+        }
+      });
+    } else if (type === 'test') {
+      // First check if the association exists
+      const existing = await Prisma.courseTest.findFirst({
+        where: {
+          courseId: courseIdBigInt,
+          testId: contentIdBigInt
+        }
+      });
+
+      console.log('Existing courseTest:', existing);
+
+      if (!existing) {
+        return createErrorResponse(res, 404, `Test ${contentId} not found in course ${id}`);
+      }
+
+      deleteResult = await Prisma.courseTest.deleteMany({
+        where: {
+          courseId: courseIdBigInt,
+          testId: contentIdBigInt
+        }
+      });
+    }
+
+    console.log('Delete result:', deleteResult);
+
+    if (deleteResult.count === 0) {
+      return createErrorResponse(res, 404, `${type} not found in this course`);
+    }
+
+    return createResponse(res, 200, `${type} removed from course successfully`);
+
+  } catch (error) {
+    console.error('Error removing content:', error);
+    return createErrorResponse(res, 500, 'Failed to remove content');
+  }
+};

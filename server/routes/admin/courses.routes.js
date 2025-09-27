@@ -10,7 +10,9 @@ import {
   updateCourse,
   deleteCourse,
   updateCourseStatus,
-  getCourseSessions
+  getCourseSessions,
+  assignContent,
+  removeContent
 } from "../../controllers/admin/courses.controller.js";
 import { validateSchema, validateParams, validateQuery } from "../../middlewares/validation.middleware.js";
 import {
@@ -19,7 +21,9 @@ import {
   courseIdSchema,
   courseIdParamSchema,
   courseQuerySchema,
-  updateCourseStatusSchema
+  updateCourseStatusSchema,
+  removeContentParamsSchema,
+  removeContentQuerySchema
 } from "../../schemas/course.schemas.js";
 
 const coursesRouter = Router();
@@ -67,4 +71,18 @@ coursesRouter.get('/:courseId/sessions',
   validateParams(courseIdParamSchema),
   getCourseSessions
 );
+
+// POST /api/admin/courses/:id/content - Assign content to a course
+coursesRouter.post('/:id/content',
+  validateParams(courseIdSchema),
+  assignContent
+);
+
+// DELETE /api/admin/courses/:id/content/:contentId - Remove content from a course
+coursesRouter.delete('/:id/content/:contentId',
+  validateParams(removeContentParamsSchema),
+  validateQuery(removeContentQuerySchema),
+  removeContent
+);
+
 export default coursesRouter;
