@@ -63,37 +63,6 @@ export default function CourseAnalytics({ course, className = '' }) {
 
   // Mock analytics data - in real app, this would come from API
   const mockAnalyticsData = useMemo(() => ({
-    enrollmentTrend: {
-      labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-      datasets: [{
-        label: 'New Enrollments',
-        data: [5, 8, 12, 15, 18, 22],
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    sessionPopularity: {
-      labels: course.content?.lessons?.slice(0, 8)?.map((lesson, idx) => `Session ${idx + 1}`) ||
-              ['Session 1', 'Session 2', 'Session 3', 'Session 4', 'Session 5'],
-      datasets: [{
-        label: 'Session Views',
-        data: [45, 38, 42, 35, 41, 33, 39, 44],
-        backgroundColor: [
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(168, 85, 247, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
-          'rgba(20, 184, 166, 0.8)',
-          'rgba(251, 146, 60, 0.8)',
-          'rgba(139, 92, 246, 0.8)'
-        ],
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.8)'
-      }]
-    },
     completionRates: {
       labels: ['Completed', 'In Progress', 'Not Started'],
       datasets: [{
@@ -115,8 +84,7 @@ export default function CourseAnalytics({ course, className = '' }) {
     performanceMetrics: {
       averageScore: 82.5,
       totalAssessments: 156,
-      completionRate: 78.3,
-      engagementScore: 8.7
+      completionRate: 78.3
     },
     popularContent: [
       { name: 'Reading Comprehension Basics', views: 145, type: 'lesson' },
@@ -263,281 +231,81 @@ Revenue Growth,${mockAnalyticsData.revenueData.growth}%`
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Analytics Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
-            <span>Course Analytics</span>
-          </h2>
-          <p className="text-gray-600 mt-1">Comprehensive performance insights and metrics</p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleExport('csv')}
-            disabled={loading}
-            className="justify-center sm:justify-start"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleExport('json')}
-            disabled={loading}
-            className="justify-center sm:justify-start"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Export JSON
-          </Button>
-        </div>
+      {/* Basic Information */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
+          <BarChart3 className="h-5 w-5 text-blue-600" />
+          <span>Basic Information</span>
+        </h2>
+        <p className="text-gray-600 mt-1">Course overview and key details</p>
       </div>
 
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Students */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Students</p>
-                <p className="text-2xl font-bold text-gray-900">{course.stats.activeEnrollments}</p>
-                <div className="flex items-center space-x-1 mt-1">
-                  {getTrendIcon(course.stats.activeEnrollments, 18)}
-                  <span className={`text-xs font-medium ${getTrendColor(course.stats.activeEnrollments, 18)}`}>
-                    {course.stats.activeEnrollments > 18 ? '+' : ''}{course.stats.activeEnrollments - 18} from last month
-                  </span>
-                </div>
+      {/* Course Statistics */}
+      <Card className="mb-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+            <Users className="h-5 w-5 text-blue-600" />
+            <span>Course Statistics</span>
+          </CardTitle>
+          <CardDescription className="text-gray-600">
+            Current enrollment and engagement metrics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <Users className="h-8 w-8 text-blue-600" />
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Users className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Average Score */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Average Score</p>
-                <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.performanceMetrics.averageScore}%</p>
-                <div className="flex items-center space-x-1 mt-1">
-                  {getTrendIcon(82.5, 78.2)}
-                  <span className={`text-xs font-medium ${getTrendColor(82.5, 78.2)}`}>
-                    +4.3% from last month
-                  </span>
-                </div>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Award className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Completion Rate */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.performanceMetrics.completionRate}%</p>
-                <div className="flex items-center space-x-1 mt-1">
-                  {getTrendIcon(78.3, 75.8)}
-                  <span className={`text-xs font-medium ${getTrendColor(78.3, 75.8)}`}>
-                    +2.5% from last month
-                  </span>
-                </div>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Target className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Revenue */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Revenue This Month</p>
-                <p className="text-2xl font-bold text-gray-900">{mockAnalyticsData.revenueData.thisMonth.toLocaleString()} EGP</p>
-                <div className="flex items-center space-x-1 mt-1">
-                  {getTrendIcon(mockAnalyticsData.revenueData.thisMonth, mockAnalyticsData.revenueData.lastMonth)}
-                  <span className={`text-xs font-medium ${getTrendColor(mockAnalyticsData.revenueData.thisMonth, mockAnalyticsData.revenueData.lastMonth)}`}>
-                    +{mockAnalyticsData.revenueData.growth}% from last month
-                  </span>
-                </div>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <DollarSign className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Enrollment Trend Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <LineChart className="h-5 w-5 text-blue-600" />
-              <span>Enrollment Trend</span>
-            </CardTitle>
-            <CardDescription>
-              Student enrollment over the past 6 weeks
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 sm:h-72 lg:h-64">
-              <Line
-                data={mockAnalyticsData.enrollmentTrend}
-                options={chartOptions}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Session Popularity Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5 text-green-600" />
-              <span>Session Popularity</span>
-            </CardTitle>
-            <CardDescription>
-              Most and least popular course sessions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 sm:h-72 lg:h-64">
-              <Bar
-                data={mockAnalyticsData.sessionPopularity}
-                options={chartOptions}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Completion Rates Donut Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <PieChart className="h-5 w-5 text-purple-600" />
-              <span>Course Completion</span>
-            </CardTitle>
-            <CardDescription>
-              Student progress distribution across the course
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 sm:h-72 lg:h-64">
-              <Doughnut
-                data={mockAnalyticsData.completionRates}
-                options={doughnutOptions}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Popular Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Star className="h-5 w-5 text-yellow-600" />
-              <span>Most Popular Content</span>
-            </CardTitle>
-            <CardDescription>
-              Top performing lessons, homework, and tests
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockAnalyticsData.popularContent.map((item, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">#{index + 1}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{item.name}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Badge variant={item.type === 'lesson' ? 'default' : item.type === 'test' ? 'destructive' : 'secondary'} className="text-xs">
-                        {item.type}
-                      </Badge>
-                      <span className="text-sm text-gray-600">{item.views} views</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Engagement Metrics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Engagement Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-green-600">
-                  {mockAnalyticsData.performanceMetrics.engagementScore}/10
+              <h3 className="text-4xl font-bold text-gray-900 mb-2">{course.stats.activeEnrollments}</h3>
+              <p className="text-lg font-medium text-gray-700 mb-2">Total Students Enrolled</p>
+              <div className="flex items-center justify-center space-x-2">
+                {getTrendIcon(course.stats.activeEnrollments, 18)}
+                <span className={`text-sm font-medium ${getTrendColor(course.stats.activeEnrollments, 18)}`}>
+                  {course.stats.activeEnrollments > 18 ? '+' : ''}{course.stats.activeEnrollments - 18} from last month
                 </span>
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  Excellent
-                </Badge>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-green-600 h-2 rounded-full"
-                  style={{ width: `${mockAnalyticsData.performanceMetrics.engagementScore * 10}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-600">
-                Based on session attendance, assignment completion, and interaction rates
-              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Assessment Activity and Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Assessment Statistics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Assessment Activity</CardTitle>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <BookOpen className="h-5 w-5 text-green-600" />
+              <span>Assessment Activity</span>
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Student engagement with course assessments
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="text-center">
-                <span className="text-3xl font-bold text-blue-600">
+            <div className="space-y-6">
+              <div className="text-center bg-white rounded-xl p-6 border border-green-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
+                  <BookOpen className="h-6 w-6 text-green-600" />
+                </div>
+                <span className="text-4xl font-bold text-green-600 block">
                   {mockAnalyticsData.performanceMetrics.totalAssessments}
                 </span>
-                <p className="text-xs text-gray-600 mt-1">Total Attempts</p>
+                <p className="text-sm text-gray-600 mt-2 font-medium">Total Attempts</p>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <span className="text-lg font-semibold text-green-600">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center bg-white rounded-lg p-4 border border-green-100">
+                  <span className="text-2xl font-bold text-green-600 block">
                     {Math.round(mockAnalyticsData.performanceMetrics.totalAssessments * 0.68)}
                   </span>
-                  <p className="text-xs text-gray-600">Homework</p>
+                  <p className="text-sm text-gray-600 mt-1 font-medium">Homework</p>
                 </div>
-                <div>
-                  <span className="text-lg font-semibold text-purple-600">
+                <div className="text-center bg-white rounded-lg p-4 border border-green-100">
+                  <span className="text-2xl font-bold text-purple-600 block">
                     {Math.round(mockAnalyticsData.performanceMetrics.totalAssessments * 0.32)}
                   </span>
-                  <p className="text-xs text-gray-600">Tests</p>
+                  <p className="text-sm text-gray-600 mt-1 font-medium">Tests</p>
                 </div>
               </div>
             </div>
@@ -545,27 +313,33 @@ Revenue Growth,${mockAnalyticsData.revenueData.growth}%`
         </Card>
 
         {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-violet-50">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-purple-600" />
+              <span>Recent Activity</span>
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Latest course interactions and engagement
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-gray-600">5 new enrollments today</span>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-purple-100">
+                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+                <span className="text-gray-700 font-medium">5 new enrollments today</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-600">12 assignments submitted</span>
+              <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-purple-100">
+                <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                <span className="text-gray-700 font-medium">12 assignments submitted</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-gray-600">3 tests completed</span>
+              <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-purple-100">
+                <div className="w-3 h-3 bg-purple-500 rounded-full flex-shrink-0"></div>
+                <span className="text-gray-700 font-medium">3 tests completed</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <span className="text-gray-600">Average session duration: 45min</span>
+              <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-purple-100">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full flex-shrink-0"></div>
+                <span className="text-gray-700 font-medium">Average session duration: 45min</span>
               </div>
             </div>
           </CardContent>

@@ -242,7 +242,7 @@ export default function AdminCourses() {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg truncate">{course.title}</CardTitle>
+                  <CardTitle className="text-lg truncate capitalize">{course.title}</CardTitle>
                   <CardDescription className="mt-1 line-clamp-2">
                     {course.description}
                   </CardDescription>
@@ -307,16 +307,6 @@ export default function AdminCourses() {
                     </Link>
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    className="sm:flex-1 h-11 sm:h-9 text-base sm:text-sm min-w-0 truncate"
-                    asChild
-                  >
-                    <Link to={`/admin/courses/${course.id}/edit`} className="flex items-center justify-center">
-                      <Edit className="h-4 w-4 sm:h-3 sm:w-3 mr-2 sm:mr-1 flex-shrink-0" />
-                      <span className="truncate">Edit</span>
-                    </Link>
-                  </Button>
 
                   <Button
                     variant="outline"

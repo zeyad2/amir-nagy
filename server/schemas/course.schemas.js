@@ -83,3 +83,21 @@ export const updateCourseStatusSchema = Joi.object({
     'any.required': 'Status is required'
   })
 });
+
+export const removeContentParamsSchema = Joi.object({
+  id: Joi.string().pattern(/^\d+$/).required().messages({
+    'string.pattern.base': 'Course ID must be a valid number',
+    'any.required': 'Course ID is required'
+  }),
+  contentId: Joi.string().pattern(/^\d+$/).required().messages({
+    'string.pattern.base': 'Content ID must be a valid number',
+    'any.required': 'Content ID is required'
+  })
+});
+
+export const removeContentQuerySchema = Joi.object({
+  type: Joi.string().valid('lesson', 'homework', 'test').required().messages({
+    'any.only': 'Type must be "lesson", "homework", or "test"',
+    'any.required': 'Content type is required'
+  })
+});

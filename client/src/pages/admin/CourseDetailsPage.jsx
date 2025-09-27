@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Checkbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import AccessWindowManager from '@/components/admin/AccessWindowManager'
 import CourseAnalytics from '@/components/admin/CourseAnalytics'
@@ -31,7 +33,9 @@ import {
   Clock,
   AlertCircle,
   ExternalLink,
-  Archive
+  Archive,
+  Plus,
+  Minus
 } from 'lucide-react'
 
 export default function CourseDetailsPage() {
@@ -51,6 +55,12 @@ export default function CourseDetailsPage() {
   // Dialog states
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [contentDialogOpen, setContentDialogOpen] = useState(false)
+  const [contentType, setContentType] = useState('lessons') // 'lessons', 'homework', 'tests'
+  const [availableContent, setAvailableContent] = useState([])
+  const [loadingContent, setLoadingContent] = useState(false)
+  const [selectedItems, setSelectedItems] = useState([])
+  const [dueDates, setDueDates] = useState({})
 
   // Fetch course data
   const fetchCourse = async () => {
@@ -180,6 +190,116 @@ export default function CourseDetailsPage() {
     }
   }
 
+  // Content management functions
+  const openContentDialog = async (type) => {
+    setContentType(type)
+    setLoadingContent(true)
+    setContentDialogOpen(true)
+    setSelectedItems([])
+    setDueDates({})
+
+    try {
+      const token = storageService.getToken()
+      let endpoint = ''
+
+      switch(type) {
+        case 'lessons':
+          endpoint = 'http://localhost:5000/api/admin/lessons'
+          break
+        case 'homework':
+          endpoint = 'http://localhost:5000/api/admin/homework'
+          break
+        case 'tests':
+          endpoint = 'http://localhost:5000/api/admin/tests'
+          break
+      }
+
+      const response = await fetch(endpoint, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${type}`)
+      }
+
+      const data = await response.json()
+      setAvailableContent(data.data[type] || [])
+    } catch (err) {
+      toast.error(`Failed to load ${type}`)
+      setAvailableContent([])
+    } finally {
+      setLoadingContent(false)
+    }
+  }
+
+  const assignContent = async () => {
+    try {
+      if (selectedItems.length === 0) {
+        toast.error('Please select at least one item to assign')
+        return
+      }
+
+      const token = storageService.getToken()
+      const assignmentData = {
+        type: contentType,
+        contentIds: selectedItems
+      }
+
+      // Add due dates for homework and tests
+      if (contentType === 'homework' || contentType === 'tests') {
+        assignmentData.dueDates = dueDates
+      }
+
+      const response = await fetch(`http://localhost:5000/api/admin/courses/${id}/content`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(assignmentData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to assign ${contentType}`)
+      }
+
+      // Refresh course data
+      await fetchCourse()
+      toast.success(`${contentType} assigned successfully`)
+      setContentDialogOpen(false)
+      setSelectedItems([])
+      setDueDates({})
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  const removeContent = async (contentId, type) => {
+    try {
+      const token = storageService.getToken()
+      const response = await fetch(`http://localhost:5000/api/admin/courses/${id}/content/${contentId}?type=${type}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to remove ${type}`)
+      }
+
+      // Refresh course data
+      await fetchCourse()
+      toast.success(`${type} removed successfully`)
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
@@ -221,7 +341,7 @@ export default function CourseDetailsPage() {
           </Button>
           <Separator orientation="vertical" className="h-6" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 capitalize">{course.title}</h1>
             <p className="text-gray-600 mt-1">Course Management Details</p>
           </div>
         </div>
@@ -257,7 +377,7 @@ export default function CourseDetailsPage() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center space-x-3">
-                <CardTitle className="text-xl">{course.title}</CardTitle>
+                <CardTitle className="text-xl capitalize">{course.title}</CardTitle>
                 <Badge
                   variant={course.type === 'live' ? 'default' : 'secondary'}
                   className={
@@ -385,7 +505,7 @@ export default function CourseDetailsPage() {
                     </div>
                   ) : (
                     <div className="flex items-center justify-between mt-1">
-                      <p className="text-gray-900">{course.title}</p>
+                      <p className="text-gray-900 capitalize">{course.title}</p>
                       <Button size="sm" variant="ghost" onClick={() => startEditing('title', course.title)}>
                         <Edit3 className="h-3 w-3" />
                       </Button>
@@ -532,115 +652,336 @@ export default function CourseDetailsPage() {
 
         {/* Content Tab */}
         <TabsContent value="content" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Content Overview Header */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Course Content Management
+                </h3>
+                <p className="text-gray-600">
+                  Manage lessons, homework assignments, and tests for this course.
+                  Set due dates and track student progress.
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-blue-600">
+                  {course.stats.totalContent}
+                </div>
+                <div className="text-sm text-gray-600">Total Items</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Lessons */}
-            <Card>
-              <CardHeader>
+            <Card className="group hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <BookOpen className="h-5 w-5 text-blue-600" />
-                    <span>Lessons</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <span className="text-gray-900">Lessons</span>
+                      <p className="text-sm text-gray-600 font-normal">
+                        Course learning materials
+                      </p>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{course.content.lessons.length}</Badge>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    {course.content.lessons.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {course.content.lessons.length > 0 ? (
-                  <div className="space-y-3">
-                    {course.content.lessons.map((lesson, index) => (
-                      <div key={lesson.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                        <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">{index + 1}</span>
+                  <>
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {course.content.lessons.map((lesson, index) => (
+                        <div
+                          key={lesson.id}
+                          className="group/item flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                            <span className="text-sm font-bold text-white">{index + 1}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate group-hover/item:text-blue-900">
+                              {lesson.title}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Lesson {index + 1} • Learning Material
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeContent(lesson.id, 'lesson')}
+                            className="opacity-0 group-hover/item:opacity-100 text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{lesson.title}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                    <Separator className="my-4" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openContentDialog('lessons')}
+                      className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add More Lessons
+                    </Button>
+                  </>
                 ) : (
-                  <div className="text-center py-6">
-                    <BookOpen className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">No lessons assigned</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h4 className="font-medium text-gray-900 mb-2">No lessons yet</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Start building your course by adding lessons
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => openContentDialog('lessons')}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Lesson
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Homework */}
-            <Card>
-              <CardHeader>
+            <Card className="group hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5 text-green-600" />
-                    <span>Homework</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <FileText className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <span className="text-gray-900">Homework</span>
+                      <p className="text-sm text-gray-600 font-normal">
+                        Practice assignments
+                      </p>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{course.content.homework.length}</Badge>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    {course.content.homework.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {course.content.homework.length > 0 ? (
-                  <div className="space-y-3">
-                    {course.content.homework.map((hw) => (
-                      <div key={hw.id} className="p-3 border rounded-lg">
-                        <p className="font-medium text-gray-900">{hw.title}</p>
-                        {hw.dueDate && (
-                          <div className="flex items-center space-x-1 mt-1">
-                            <Calendar className="h-3 w-3 text-gray-400" />
-                            <span className="text-xs text-gray-600">
-                              Due: {new Date(hw.dueDate).toLocaleDateString()}
-                            </span>
+                  <>
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {course.content.homework.map((hw, index) => (
+                        <div
+                          key={hw.id}
+                          className="group/item p-3 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all duration-200"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded text-white text-xs font-bold flex items-center justify-center">
+                                  {index + 1}
+                                </div>
+                                <p className="font-medium text-gray-900 truncate group-hover/item:text-green-900">
+                                  {hw.title}
+                                </p>
+                              </div>
+                              {hw.dueDate && (
+                                <div className="flex items-center space-x-1 ml-8">
+                                  <Calendar className="h-3 w-3 text-gray-400" />
+                                  <span className="text-xs text-gray-600">
+                                    Due: {new Date(hw.dueDate).toLocaleDateString('en-US', {
+                                      weekday: 'short',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeContent(hw.id, 'homework')}
+                              className="opacity-0 group-hover/item:opacity-100 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0 ml-2 transition-all duration-200"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator className="my-4" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openContentDialog('homework')}
+                      className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add More Homework
+                    </Button>
+                  </>
                 ) : (
-                  <div className="text-center py-6">
-                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">No homework assigned</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h4 className="font-medium text-gray-900 mb-2">No homework yet</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Add homework assignments for student practice
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => openContentDialog('homework')}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Homework
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Tests */}
-            <Card>
-              <CardHeader>
+            <Card className="group hover:shadow-lg transition-shadow duration-200">
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <GraduationCap className="h-5 w-5 text-purple-600" />
-                    <span>Tests</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <GraduationCap className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <span className="text-gray-900">Tests</span>
+                      <p className="text-sm text-gray-600 font-normal">
+                        Assessment evaluations
+                      </p>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{course.content.tests.length}</Badge>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                    {course.content.tests.length}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {course.content.tests.length > 0 ? (
-                  <div className="space-y-3">
-                    {course.content.tests.map((test) => (
-                      <div key={test.id} className="p-3 border rounded-lg">
-                        <p className="font-medium text-gray-900">{test.title}</p>
-                        {test.dueDate && (
-                          <div className="flex items-center space-x-1 mt-1">
-                            <Calendar className="h-3 w-3 text-gray-400" />
-                            <span className="text-xs text-gray-600">
-                              Due: {new Date(test.dueDate).toLocaleDateString()}
-                            </span>
+                  <>
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {course.content.tests.map((test, index) => (
+                        <div
+                          key={test.id}
+                          className="group/item p-3 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all duration-200"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded text-white text-xs font-bold flex items-center justify-center">
+                                  {index + 1}
+                                </div>
+                                <p className="font-medium text-gray-900 truncate group-hover/item:text-purple-900">
+                                  {test.title}
+                                </p>
+                              </div>
+                              {test.dueDate && (
+                                <div className="flex items-center space-x-1 ml-8">
+                                  <Calendar className="h-3 w-3 text-gray-400" />
+                                  <span className="text-xs text-gray-600">
+                                    Due: {new Date(test.dueDate).toLocaleDateString('en-US', {
+                                      weekday: 'short',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeContent(test.id, 'test')}
+                              className="opacity-0 group-hover/item:opacity-100 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0 ml-2 transition-all duration-200"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator className="my-4" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openContentDialog('tests')}
+                      className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add More Tests
+                    </Button>
+                  </>
                 ) : (
-                  <div className="text-center py-6">
-                    <GraduationCap className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">No tests assigned</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <GraduationCap className="h-8 w-8 text-purple-600" />
+                    </div>
+                    <h4 className="font-medium text-gray-900 mb-2">No tests yet</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Add tests to evaluate student understanding
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => openContentDialog('tests')}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Test
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
+
+          {/* Quick Actions Bar */}
+          {course.stats.totalContent > 0 && (
+            <Card className="bg-gray-50 border-gray-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">{course.stats.totalContent}</span> content items assigned
+                    </div>
+                    <Separator orientation="vertical" className="h-4" />
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">{course.stats.activeEnrollments}</span> students enrolled
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button size="sm" variant="outline">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview Course
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Student Portal
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Students Tab */}
@@ -910,6 +1251,208 @@ export default function CourseDetailsPage() {
             <Button variant="destructive" onClick={handleDelete} disabled={saving}>
               {saving ? 'Deleting...' : 'Delete Course'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Assignment Dialog */}
+      <Dialog open={contentDialogOpen} onOpenChange={setContentDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Plus className="h-5 w-5" />
+              <span>Assign {contentType.charAt(0).toUpperCase() + contentType.slice(1)}</span>
+            </DialogTitle>
+            <DialogDescription>
+              Select {contentType} to assign to this course{(contentType === 'homework' || contentType === 'tests') && ' and set due dates'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 flex-1 overflow-y-auto min-h-0">
+            {loadingContent ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Loading {contentType}...</span>
+              </div>
+            ) : availableContent.length > 0 ? (
+              <>
+                {/* Selection Summary */}
+                {selectedItems.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                        <span className="font-medium text-blue-900">
+                          {selectedItems.length} {contentType} selected
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedItems([])
+                          setDueDates({})
+                        }}
+                      >
+                        Clear Selection
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content List */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-y-auto">
+                  {availableContent.map((item) => {
+                    const isAssigned = course.content[contentType]?.some(assigned => assigned.id === item.id)
+                    const isSelected = selectedItems.includes(item.id)
+                    const needsDueDate = (contentType === 'homework' || contentType === 'tests') && isSelected
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "border rounded-lg p-4 transition-all duration-200",
+                          isAssigned
+                            ? "bg-gray-50 border-gray-300"
+                            : isSelected
+                            ? "bg-blue-50 border-blue-300 ring-2 ring-blue-100"
+                            : "hover:bg-gray-50 hover:border-gray-400 cursor-pointer"
+                        )}
+                        onClick={() => {
+                          if (!isAssigned && !isSelected) {
+                            setSelectedItems([...selectedItems, item.id])
+                            if (contentType === 'homework' || contentType === 'tests') {
+                              const defaultDate = new Date()
+                              defaultDate.setDate(defaultDate.getDate() + (contentType === 'homework' ? 7 : 14))
+                              setDueDates({ ...dueDates, [item.id]: defaultDate })
+                            }
+                          }
+                        }}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            id={item.id}
+                            checked={isSelected}
+                            disabled={isAssigned}
+                            onCheckedChange={(checked) => {
+                              if (checked && !isAssigned) {
+                                setSelectedItems([...selectedItems, item.id])
+                                if (contentType === 'homework' || contentType === 'tests') {
+                                  const defaultDate = new Date()
+                                  defaultDate.setDate(defaultDate.getDate() + (contentType === 'homework' ? 7 : 14))
+                                  setDueDates({ ...dueDates, [item.id]: defaultDate })
+                                }
+                              } else if (!checked) {
+                                setSelectedItems(selectedItems.filter(id => id !== item.id))
+                                if (dueDates[item.id]) {
+                                  const newDueDates = { ...dueDates }
+                                  delete newDueDates[item.id]
+                                  setDueDates(newDueDates)
+                                }
+                              }
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <label
+                                htmlFor={item.id}
+                                className={cn(
+                                  "font-medium cursor-pointer",
+                                  isAssigned ? "text-gray-500" : "text-gray-900"
+                                )}
+                              >
+                                {item.title}
+                              </label>
+                              {isAssigned && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Assigned
+                                </Badge>
+                              )}
+                            </div>
+                            {item.description && (
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                {item.description}
+                              </p>
+                            )}
+                            {isAssigned && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Already assigned to this course
+                              </p>
+                            )}
+
+                            {/* Due Date Picker for Homework and Tests */}
+                            {needsDueDate && (
+                              <div className="mt-3 pt-3 border-t border-blue-200">
+                                <Label className="text-sm font-medium text-blue-900">
+                                  Due Date
+                                </Label>
+                                <Input
+                                  type="date"
+                                  value={dueDates[item.id] ? dueDates[item.id].toISOString().split('T')[0] : ''}
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      setDueDates({ ...dueDates, [item.id]: new Date(e.target.value) })
+                                    }
+                                  }}
+                                  min={new Date().toISOString().split('T')[0]}
+                                  className="mt-1"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  {contentType === 'lessons' && <BookOpen className="h-12 w-12 mx-auto" />}
+                  {contentType === 'homework' && <FileText className="h-12 w-12 mx-auto" />}
+                  {contentType === 'tests' && <GraduationCap className="h-12 w-12 mx-auto" />}
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No {contentType} available
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Create {contentType} in the Resources section first
+                </p>
+                <Button variant="outline" onClick={() => setContentDialogOpen(false)}>
+                  Go to Resources
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4 border-t pt-4 flex-shrink-0">
+            <div className="flex-1 text-sm text-gray-600">
+              {selectedItems.length > 0 && (
+                <span>
+                  {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''} selected
+                  {(contentType === 'homework' || contentType === 'tests') && (
+                    <span className="block sm:inline sm:ml-2">
+                      • Due dates: {Object.keys(dueDates).length}/{selectedItems.length} set
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => setContentDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={assignContent}
+                disabled={selectedItems.length === 0 || (
+                  (contentType === 'homework' || contentType === 'tests') &&
+                  Object.keys(dueDates).length < selectedItems.length
+                )}
+              >
+                Assign {selectedItems.length > 0 && `(${selectedItems.length})`}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
