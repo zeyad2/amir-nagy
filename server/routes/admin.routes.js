@@ -13,6 +13,7 @@ import coursesRouter from "./admin/courses.routes.js";
 import dashboardRouter from "./admin/dashboard.routes.js";
 import studentsRouter from "./admin/students.routes.js";
 import enrollmentRequestsRouter from "./admin/enrollment-requests.routes.js";
+import enrollmentsRouter from "./admin/enrollments.routes.js";
 import accessWindowsRouter from "./admin/accessWindows.routes.js";
 
 const adminRouter = Router();
@@ -32,6 +33,7 @@ adminRouter.use("/courses", coursesRouter);
 adminRouter.use("/dashboard", dashboardRouter);
 adminRouter.use("/students", studentsRouter);
 adminRouter.use("/enrollment-requests", enrollmentRequestsRouter);
+adminRouter.use("/enrollments", enrollmentsRouter);
 adminRouter.use("/", accessWindowsRouter);
 
 export default adminRouter;

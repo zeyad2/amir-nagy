@@ -65,3 +65,10 @@ export const bulkEnrollmentSchema = Joi.object({
     })
   ).optional().default({})
 });
+
+export const createEnrollmentRequestSchema = Joi.object({
+  courseId: Joi.string().pattern(/^\d+$/).required().messages({
+    'string.pattern.base': 'Course ID must be a valid number',
+    'any.required': 'Course ID is required'
+  })
+});

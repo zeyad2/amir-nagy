@@ -3,7 +3,7 @@
  * Validates student access to course sessions based on access windows
  */
 import Prisma from "../prisma/prisma.js";
-import { createErrorResponse } from "../utils/response.utils.js";
+import { createErrorResponse } from "../utils/response.util.js";
 
 /**
  * Check if a student has access to a specific session
@@ -182,14 +182,19 @@ async function checkSessionAccess(session, enrollment) {
     return true;
   }
 
-  // Check if session falls within any access window
+  // Check if session falls within any access window based on session IDs
   for (const accessWindow of enrollment.accessWindows) {
-    const sessionDate = new Date(session.date);
-    const startDate = new Date(accessWindow.startSession.date);
-    const endDate = new Date(accessWindow.endSession.date);
+    const sessionId = session.id;
+    const startSessionId = accessWindow.startSession.id;
+    const endSessionId = accessWindow.endSession.id;
 
-    // Check if session is within the date range of this access window
-    if (sessionDate >= startDate && sessionDate <= endDate) {
+    // Check if session ID falls within the range of accessible sessions
+    // Convert BigInt to Number for comparison
+    const sessionIdNum = Number(sessionId);
+    const startSessionIdNum = Number(startSessionId);
+    const endSessionIdNum = Number(endSessionId);
+
+    if (sessionIdNum >= startSessionIdNum && sessionIdNum <= endSessionIdNum) {
       return true;
     }
   }
@@ -204,12 +209,10 @@ async function checkSessionAccess(session, enrollment) {
 export const getAccessibleSessions = async (studentId, courseId) => {
   try {
     // Get enrollment with access windows
-    const enrollment = await Prisma.enrollment.findUnique({
+    const enrollment = await Prisma.enrollment.findFirst({
       where: {
-        studentId_courseId: {
-          studentId: BigInt(studentId),
-          courseId: BigInt(courseId)
-        },
+        studentId: BigInt(studentId),
+        courseId: BigInt(courseId),
         deletedAt: null
       },
       include: {
@@ -232,7 +235,7 @@ export const getAccessibleSessions = async (studentId, courseId) => {
       orderBy: { date: 'asc' }
     });
 
-    // If no access windows, return all sessions
+    // If no access windows, return all sessions (full access)
     if (!enrollment.accessWindows || enrollment.accessWindows.length === 0) {
       return allSessions.map(session => session.id.toString());
     }
