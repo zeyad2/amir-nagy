@@ -184,18 +184,20 @@ async function checkSessionAccess(session, enrollment) {
 
   // Check if session falls within any access window based on session IDs
   for (const accessWindow of enrollment.accessWindows) {
-    const sessionId = session.id;
-    const startSessionId = accessWindow.startSession.id;
-    const endSessionId = accessWindow.endSession.id;
+    const startSessionId = accessWindow.startSession?.id;
+    const endSessionId = accessWindow.endSession?.id;
 
-    // Check if session ID falls within the range of accessible sessions
-    // Convert BigInt to Number for comparison
-    const sessionIdNum = Number(sessionId);
-    const startSessionIdNum = Number(startSessionId);
-    const endSessionIdNum = Number(endSessionId);
-
-    if (sessionIdNum >= startSessionIdNum && sessionIdNum <= endSessionIdNum) {
+    // If both start and end sessions are null, full access
+    if (startSessionId == null && endSessionId == null) {
       return true;
+    }
+
+    // If only start session is defined (late join scenario), check if session is after start
+    if (startSessionId != null && session.id >= startSessionId) {
+      // If no end session defined OR session is before end session
+      if (!endSessionId || session.id <= endSessionId) {
+        return true;
+      }
     }
   }
 

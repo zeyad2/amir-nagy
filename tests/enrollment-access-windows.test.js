@@ -216,8 +216,8 @@ test.describe('Enrollment & Access Window Integration Tests', () => {
     // Should have 1 access window
     expect(enrollmentData.data.accessWindows).toHaveLength(1);
     const accessWindow = enrollmentData.data.accessWindows[0];
-    expect(accessWindow.startSessionId.toString()).toBe(startSessionId.toString());
-    expect(accessWindow.endSessionId.toString()).toBe(endSessionId.toString());
+    expect(accessWindow.startSession.id.toString()).toBe(startSessionId.toString());
+    expect(accessWindow.endSession.id.toString()).toBe(endSessionId.toString());
     console.log(`  ✅ Access window created: Sessions ${startSessionId} to ${endSessionId}`);
 
     // Step 4: Test student access status
@@ -310,8 +310,8 @@ test.describe('Enrollment & Access Window Integration Tests', () => {
 
     expect(enrollmentData.data.accessWindows).toHaveLength(1);
     const accessWindow = enrollmentData.data.accessWindows[0];
-    expect(accessWindow.startSessionId.toString()).toBe(startSessionId.toString());
-    expect(accessWindow.endSessionId.toString()).toBe(testSessions[testSessions.length - 1].id.toString()); // Last session
+    expect(accessWindow.startSession.id.toString()).toBe(startSessionId.toString());
+    expect(accessWindow.endSession.id.toString()).toBe(testSessions[testSessions.length - 1].id.toString()); // Last session
     console.log(`  ✅ Late join access window: From session ${startSessionId} to end`);
 
     // Step 4: Test student access

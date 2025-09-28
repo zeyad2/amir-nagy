@@ -10,8 +10,11 @@ import {
   getStudentEnrollmentRequests,
   cancelEnrollmentRequest
 } from "../controllers/student/enrollment.controller.js";
-import { validateSchema } from "../middlewares/validation.middleware.js";
-import { createEnrollmentRequestSchema } from "../schemas/student.schemas.js";
+import { validateSchema, validateParams } from "../middlewares/validation.middleware.js";
+import {
+  createEnrollmentRequestSchema,
+  enrollmentRequestIdSchema
+} from "../schemas/student.schemas.js";
 
 const studentRouter = Router();
 
@@ -30,6 +33,7 @@ studentRouter.get('/enrollment-requests',
 );
 
 studentRouter.delete('/enrollment-requests/:id',
+  validateParams(enrollmentRequestIdSchema),
   cancelEnrollmentRequest
 );
 
