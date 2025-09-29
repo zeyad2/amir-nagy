@@ -137,7 +137,7 @@ export const getEnrollments = async (req, res) => {
     const take = parseInt(limit);
 
     // Build where clause
-    const where = {};
+    const where = { deletedAt: null };
 
     if (status) {
       where.status = status;
@@ -296,7 +296,7 @@ export const getEnrollment = async (req, res) => {
     const { id } = req.params;
 
     const enrollment = await Prisma.enrollment.findUnique({
-      where: { id: BigInt(id) },
+      where: { id: BigInt(id), deletedAt: null },
       include: {
         student: {
           include: {
