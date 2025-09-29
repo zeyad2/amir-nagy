@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { storageService } from '@/services/storage.service'
+import { adminService } from '@/services/admin.service'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import AccessWindowManager from '@/components/admin/AccessWindowManager'
@@ -61,6 +64,14 @@ export default function CourseDetailsPage() {
   const [loadingContent, setLoadingContent] = useState(false)
   const [selectedItems, setSelectedItems] = useState([])
   const [dueDates, setDueDates] = useState({})
+
+  // Enrollment request handling states
+  const [actionLoading, setActionLoading] = useState(false)
+  const [selectedRequest, setSelectedRequest] = useState(null)
+  const [accessWindowDialogOpen, setAccessWindowDialogOpen] = useState(false)
+  const [accessType, setAccessType] = useState('full')
+  const [startSession, setStartSession] = useState('')
+  const [endSession, setEndSession] = useState('')
 
   // Fetch course data
   const fetchCourse = async () => {
@@ -297,6 +308,81 @@ export default function CourseDetailsPage() {
       toast.success(`${type} removed successfully`)
     } catch (err) {
       toast.error(err.message)
+    }
+  }
+
+  // Enrollment request handlers
+  const handleApproveRequest = async (request) => {
+    // Check if it's a live course that needs access window assignment
+    if (course.type === 'live') {
+      setSelectedRequest(request)
+      setAccessWindowDialogOpen(true)
+    } else {
+      // Direct approval for finished courses
+      await processApproval(request.id, null)
+    }
+  }
+
+  const processApproval = async (requestId, accessWindow) => {
+    setActionLoading(true)
+    try {
+      await adminService.approveEnrollmentRequest(requestId, accessWindow)
+      toast.success('Enrollment request approved successfully')
+      fetchCourse() // Reload course data to get updated pending requests
+      setAccessWindowDialogOpen(false)
+      setSelectedRequest(null)
+      resetAccessWindowForm()
+    } catch (error) {
+      toast.error('Failed to approve enrollment request')
+      console.error('Error approving request:', error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRejectRequest = async (requestId) => {
+    setActionLoading(true)
+    try {
+      await adminService.rejectEnrollmentRequest(requestId)
+      toast.success('Enrollment request rejected')
+      fetchCourse() // Reload course data to get updated pending requests
+    } catch (error) {
+      toast.error('Failed to reject enrollment request')
+      console.error('Error rejecting request:', error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const resetAccessWindowForm = () => {
+    setAccessType('full')
+    setStartSession('')
+    setEndSession('')
+  }
+
+  const handleAccessWindowSubmit = () => {
+    if (accessType === 'full') {
+      processApproval(selectedRequest.id, null)
+    } else {
+      // For partial access, both start and end sessions are required
+      if (accessType === 'partial' && (!startSession || !endSession)) {
+        toast.error('Please select start and end sessions')
+        return
+      }
+
+      // For late join, only start session is required
+      if (accessType === 'late' && !startSession) {
+        toast.error('Please select start session')
+        return
+      }
+
+      const accessWindow = {
+        type: accessType,
+        startSessionId: startSession,
+        endSessionId: accessType === 'late' ? null : endSession
+      }
+
+      processApproval(selectedRequest.id, accessWindow)
     }
   }
 
@@ -1055,10 +1141,18 @@ export default function CourseDetailsPage() {
                           </p>
                         </div>
                         <div className="flex space-x-1">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleApproveRequest(request)}
+                          >
                             Approve
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRejectRequest(request.id)}
+                          >
                             Reject
                           </Button>
                         </div>
@@ -1454,6 +1548,168 @@ export default function CourseDetailsPage() {
               </Button>
             </div>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Access Window Assignment Dialog */}
+      <Dialog open={accessWindowDialogOpen} onOpenChange={setAccessWindowDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Course Access</DialogTitle>
+            <DialogDescription>
+              Configure access permissions for this live course enrollment
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedRequest && (
+            <div className="space-y-6">
+              {/* Course Information */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Course: {course.title}</h4>
+                <p className="text-sm text-gray-600">Student: {selectedRequest.studentName}</p>
+                <p className="text-sm text-gray-600">Course Type: Live Course</p>
+              </div>
+
+              {/* Access Type Selection */}
+              <div className="space-y-4">
+                <Label className="text-base font-medium">Access Type</Label>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="full"
+                      name="accessType"
+                      value="full"
+                      checked={accessType === 'full'}
+                      onChange={(e) => setAccessType(e.target.value)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="full" className="flex-1">
+                      <div>
+                        <p className="font-medium">Full Access</p>
+                        <p className="text-sm text-gray-600">Student can access all course sessions</p>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="partial"
+                      name="accessType"
+                      value="partial"
+                      checked={accessType === 'partial'}
+                      onChange={(e) => setAccessType(e.target.value)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="partial" className="flex-1">
+                      <div>
+                        <p className="font-medium">Partial Access</p>
+                        <p className="text-sm text-gray-600">Student can access specific session range</p>
+                      </div>
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="late"
+                      name="accessType"
+                      value="late"
+                      checked={accessType === 'late'}
+                      onChange={(e) => setAccessType(e.target.value)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="late" className="flex-1">
+                      <div>
+                        <p className="font-medium">Late Join</p>
+                        <p className="text-sm text-gray-600">Student joins from a specific session onwards</p>
+                      </div>
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Session Range Selection */}
+              {(accessType === 'partial' || accessType === 'late') && (
+                <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+                  <h4 className="font-medium">Session Range</h4>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="startSession">
+                        {accessType === 'late' ? 'Start From Session' : 'Start Session'}
+                      </Label>
+                      <Select value={startSession} onValueChange={setStartSession}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select session" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="session-1">Session 1</SelectItem>
+                          <SelectItem value="session-2">Session 2</SelectItem>
+                          <SelectItem value="session-3">Session 3</SelectItem>
+                          <SelectItem value="session-4">Session 4</SelectItem>
+                          <SelectItem value="session-5">Session 5</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {accessType === 'partial' && (
+                      <div>
+                        <Label htmlFor="endSession">End Session</Label>
+                        <Select value={endSession} onValueChange={setEndSession}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select session" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="session-3">Session 3</SelectItem>
+                            <SelectItem value="session-4">Session 4</SelectItem>
+                            <SelectItem value="session-5">Session 5</SelectItem>
+                            <SelectItem value="session-6">Session 6</SelectItem>
+                            <SelectItem value="session-7">Session 7</SelectItem>
+                            <SelectItem value="session-8">Session 8</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Access Preview */}
+                  {startSession && (accessType === 'late' || (accessType === 'partial' && endSession)) && (
+                    <div className="mt-4 p-3 bg-white border rounded">
+                      <p className="text-sm font-medium mb-2">Access Preview:</p>
+                      <p className="text-sm text-gray-600">
+                        Student will have access to {accessType === 'late' ? `${startSession} onwards` : `${startSession} to ${endSession}`}
+                      </p>
+                      <p className="text-sm text-blue-600 mt-1">
+                        Estimated price: {course.price} EGP
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAccessWindowDialogOpen(false)
+                    resetAccessWindowForm()
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAccessWindowSubmit}
+                  disabled={actionLoading}
+                >
+                  {actionLoading && <LoadingSpinner className="mr-2 h-4 w-4" />}
+                  Approve Enrollment
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
