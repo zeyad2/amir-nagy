@@ -3,7 +3,7 @@
  * Handles course access and student-facing course operations
  */
 import Prisma from "../prisma/prisma.js";
-import { createResponse, createErrorResponse } from "../utils/response.utils.js";
+import { createResponse, createErrorResponse } from "../utils/response.util.js";
 import { getAccessibleSessions } from "../middlewares/accessValidation.middleware.js";
 
 /**
