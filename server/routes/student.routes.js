@@ -15,6 +15,7 @@ import {
   createEnrollmentRequestSchema,
   enrollmentRequestIdSchema
 } from "../schemas/student.schemas.js";
+import assessmentsRouter from "./student/assessments.routes.js";
 
 const studentRouter = Router();
 
@@ -36,5 +37,8 @@ studentRouter.delete('/enrollment-requests/:id',
   validateParams(enrollmentRequestIdSchema),
   cancelEnrollmentRequest
 );
+
+// Assessment routes
+studentRouter.use('/assessments', assessmentsRouter);
 
 export default studentRouter;
