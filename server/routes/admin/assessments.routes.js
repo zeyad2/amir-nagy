@@ -27,6 +27,13 @@ assessmentsRouter.get('/',
   getAssessments
 );
 
+// GET /api/admin/assessments/:id/submissions - Get all submissions for an assessment
+// IMPORTANT: This must come BEFORE /:id to avoid route collision
+assessmentsRouter.get('/:id/submissions',
+  validateParams(assessmentIdSchema),
+  getAssessmentSubmissions
+);
+
 // GET /api/admin/assessments/:id - Get a specific assessment with complete structure
 assessmentsRouter.get('/:id',
   validateParams(assessmentIdSchema),
@@ -50,12 +57,6 @@ assessmentsRouter.put('/:id',
 assessmentsRouter.delete('/:id',
   validateParams(assessmentIdSchema),
   deleteAssessment
-);
-
-// GET /api/admin/assessments/:id/submissions - Get all submissions for an assessment
-assessmentsRouter.get('/:id/submissions',
-  validateParams(assessmentIdSchema),
-  getAssessmentSubmissions
 );
 
 export default assessmentsRouter;

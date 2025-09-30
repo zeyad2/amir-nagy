@@ -240,7 +240,8 @@ async function runTests() {
 
       // Verify correct answers are NOT included in student view
       const firstChoice = result.data.data.assessment.passages[0].questions[0].choices[0];
-      if (firstChoice.isCorrect === undefined) {
+      const hasIsCorrect = 'isCorrect' in firstChoice;
+      if (!hasIsCorrect) {
         console.log('   ✓ Correct answers hidden from student');
       } else {
         console.log('   ⚠ WARNING: Correct answers exposed to student!');

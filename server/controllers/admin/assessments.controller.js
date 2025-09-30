@@ -20,7 +20,10 @@ export const getAssessments = async (req, res) => {
       type = 'all'
     } = req.query;
 
-    const offset = (page - 1) * limit;
+    // Ensure positive values even if validation is bypassed
+    const safePage = Math.max(1, parseInt(page));
+    const safeLimit = Math.max(1, Math.min(100, parseInt(limit)));
+    const offset = (safePage - 1) * safeLimit;
 
     // Build where clause for search and filtering
     const where = {};
@@ -68,7 +71,7 @@ export const getAssessments = async (req, res) => {
           }
         },
         orderBy,
-        take: parseInt(limit),
+        take: safeLimit,
         skip: offset
       }),
       Prisma.test.count({ where })
@@ -96,10 +99,10 @@ export const getAssessments = async (req, res) => {
     return createResponse(res, 200, 'Assessments fetched successfully', {
       assessments: assessmentsWithUsage,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: safePage,
+        limit: safeLimit,
         total: totalCount,
-        pages: Math.ceil(totalCount / limit)
+        pages: Math.ceil(totalCount / safeLimit)
       }
     });
   } catch (error) {
@@ -323,55 +326,60 @@ export const updateAssessment = async (req, res) => {
       );
     }
 
-    // Delete existing passages (cascade will delete questions and choices)
-    await Prisma.testPassage.deleteMany({
-      where: { testId: BigInt(id) }
-    });
+    // Use transaction to ensure atomicity
+    const updatedAssessment = await Prisma.$transaction(async (prisma) => {
+      // Only delete passages if new ones are being provided
+      if (passages && passages.length > 0) {
+        await prisma.testPassage.deleteMany({
+          where: { testId: BigInt(id) }
+        });
+      }
 
-    // Update assessment with new nested structure
-    const updatedAssessment = await Prisma.test.update({
-      where: { id: BigInt(id) },
-      data: {
-        title: title || existingAssessment.title,
-        instructions: instructions !== undefined ? instructions : existingAssessment.instructions,
-        duration: duration !== undefined ? duration : existingAssessment.duration,
-        passages: passages ? {
-          create: passages.map((passage, pIndex) => ({
-            title: passage.title || null,
-            content: passage.content,
-            imageURL: passage.imageURL || null,
-            order: passage.order !== undefined ? passage.order : pIndex,
-            questions: {
-              create: passage.questions.map((question, qIndex) => ({
-                questionText: question.questionText,
-                order: question.order !== undefined ? question.order : qIndex,
-                choices: {
-                  create: question.choices.map((choice, cIndex) => ({
-                    choiceText: choice.choiceText,
-                    isCorrect: choice.isCorrect,
-                    order: choice.order !== undefined ? choice.order : cIndex
-                  }))
-                }
-              }))
-            }
-          }))
-        } : undefined
-      },
-      include: {
-        passages: {
-          orderBy: { order: 'asc' },
-          include: {
-            questions: {
-              orderBy: { order: 'asc' },
-              include: {
-                choices: {
-                  orderBy: { order: 'asc' }
+      // Update assessment with new nested structure
+      return await prisma.test.update({
+        where: { id: BigInt(id) },
+        data: {
+          title: title || existingAssessment.title,
+          instructions: instructions !== undefined ? instructions : existingAssessment.instructions,
+          duration: duration !== undefined ? duration : existingAssessment.duration,
+          passages: passages && passages.length > 0 ? {
+            create: passages.map((passage, pIndex) => ({
+              title: passage.title || null,
+              content: passage.content,
+              imageURL: passage.imageURL || null,
+              order: passage.order !== undefined ? passage.order : pIndex,
+              questions: {
+                create: passage.questions.map((question, qIndex) => ({
+                  questionText: question.questionText,
+                  order: question.order !== undefined ? question.order : qIndex,
+                  choices: {
+                    create: question.choices.map((choice, cIndex) => ({
+                      choiceText: choice.choiceText,
+                      isCorrect: choice.isCorrect,
+                      order: choice.order !== undefined ? choice.order : cIndex
+                    }))
+                  }
+                }))
+              }
+            }))
+          } : undefined
+        },
+        include: {
+          passages: {
+            orderBy: { order: 'asc' },
+            include: {
+              questions: {
+                orderBy: { order: 'asc' },
+                include: {
+                  choices: {
+                    orderBy: { order: 'asc' }
+                  }
                 }
               }
             }
           }
         }
-      }
+      });
     });
 
     // Transform response
