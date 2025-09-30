@@ -72,3 +72,28 @@ export const createEnrollmentRequestSchema = Joi.object({
     'any.required': 'Course ID is required'
   })
 });
+
+// Assessment-related schemas
+export const assessmentIdParamSchema = Joi.object({
+  id: Joi.string().pattern(/^\d+$/).required().messages({
+    'string.pattern.base': 'Assessment ID must be a valid number',
+    'any.required': 'Assessment ID is required'
+  })
+});
+
+export const submitAssessmentSchema = Joi.object({
+  answers: Joi.array().items(
+    Joi.object({
+      questionId: Joi.string().pattern(/^\d+$/).required().messages({
+        'string.pattern.base': 'Question ID must be a valid number',
+        'any.required': 'Question ID is required'
+      }),
+      choiceId: Joi.string().pattern(/^\d+$/).allow(null).messages({
+        'string.pattern.base': 'Choice ID must be a valid number'
+      })
+    })
+  ).min(1).required().messages({
+    'array.min': 'At least one answer is required',
+    'any.required': 'Answers array is required'
+  })
+});
