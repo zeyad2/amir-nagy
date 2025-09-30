@@ -150,8 +150,15 @@ export const assessmentIdSchema = Joi.object({
 // Schema for assessment query parameters
 export const assessmentQuerySchema = Joi.object({
   search: Joi.string().max(255).allow(''),
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20),
+  page: Joi.number().integer().min(1).default(1).messages({
+    'number.min': 'Page must be at least 1',
+    'number.integer': 'Page must be an integer'
+  }),
+  limit: Joi.number().integer().min(1).max(100).default(20).messages({
+    'number.min': 'Limit must be at least 1',
+    'number.max': 'Limit cannot exceed 100',
+    'number.integer': 'Limit must be an integer'
+  }),
   sortBy: Joi.string().valid('createdAt', 'title', 'duration').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   type: Joi.string().valid('timed', 'untimed', 'all').default('all')
