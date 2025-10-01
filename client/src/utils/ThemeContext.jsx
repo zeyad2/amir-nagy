@@ -11,29 +11,16 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    // Check localStorage for saved theme preference
-    const savedTheme = localStorage.getItem('sat-platform-theme')
-    if (savedTheme) {
-      return savedTheme
-    }
-
-    // Check system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  })
+  // Always use light theme
+  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
     const root = window.document.documentElement
 
-    // Remove previous theme classes
-    root.classList.remove('light', 'dark')
-
-    // Add current theme class
-    root.classList.add(theme)
-
-    // Save to localStorage
-    localStorage.setItem('sat-platform-theme', theme)
-  }, [theme])
+    // Always enforce light mode
+    root.classList.remove('dark')
+    root.classList.add('light')
+  }, [])
 
   const toggleTheme = () => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')

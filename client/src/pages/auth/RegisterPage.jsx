@@ -1,63 +1,74 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { useAuth } from '@/utils/AuthContext'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FormInput } from '@/components/common/FormInput'
-import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { Eye, EyeOff, User, Mail, Phone, Users } from 'lucide-react'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { useAuth } from "@/utils/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FormInput } from "@/components/common/FormInput";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Eye, EyeOff, User, Mail, Phone, Users } from "lucide-react";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const { register: registerUser } = useAuth()
-  const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { register: registerUser } = useAuth();
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setError,
-    watch
+    watch,
+    control,
   } = useForm({
     defaultValues: {
-      firstName: '',
-      middleName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      phone: '',
-      parentFirstName: '',
-      parentLastName: '',
-      parentPhone: '',
-      parentEmail: ''
-    }
-  })
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
+      parentFirstName: "",
+      parentLastName: "",
+      parentPhone: "",
+      parentEmail: "",
+    },
+  });
 
-  const password = watch('password')
+  const password = watch("password");
 
   const onSubmit = async (data) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
       // Remove confirmPassword from data before sending
-      const { confirmPassword, ...registerData } = data
+      const { confirmPassword, ...registerData } = data;
 
-      const user = await registerUser(registerData)
+      const user = await registerUser(registerData);
 
       // Redirect to student dashboard after successful registration
-      navigate('/student', { replace: true })
+      navigate("/student", { replace: true });
     } catch (error) {
-      setError('root', {
-        message: error.response?.data?.message || 'Registration failed. Please try again.'
-      })
+      setError("root", {
+        message:
+          error.response?.data?.message ||
+          "Registration failed. Please try again.",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sat-light to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -76,7 +87,9 @@ export default function RegisterPage() {
 
         <Card className="mt-8">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Create Account</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Create Account
+            </CardTitle>
             <CardDescription className="text-center">
               Fill in the information below to get started
             </CardDescription>
@@ -93,12 +106,12 @@ export default function RegisterPage() {
                   <FormInput
                     label="First Name"
                     placeholder="John"
-                    {...register('firstName', {
-                      required: 'First name is required',
+                    {...register("firstName", {
+                      required: "First name is required",
                       minLength: {
                         value: 2,
-                        message: 'First name must be at least 2 characters'
-                      }
+                        message: "First name must be at least 2 characters",
+                      },
                     })}
                     error={errors.firstName?.message}
                     required
@@ -106,18 +119,25 @@ export default function RegisterPage() {
                   <FormInput
                     label="Middle Name"
                     placeholder="Michael"
-                    {...register('middleName')}
+                    {...register("middleName", {
+                      required: "Middle name is required",
+                      minLength: {
+                        value: 2,
+                        message: "Middle name must be at least 2 characters",
+                      },
+                    })}
                     error={errors.middleName?.message}
+                    required
                   />
                   <FormInput
                     label="Last Name"
                     placeholder="Smith"
-                    {...register('lastName', {
-                      required: 'Last name is required',
+                    {...register("lastName", {
+                      required: "Last name is required",
                       minLength: {
                         value: 2,
-                        message: 'Last name must be at least 2 characters'
-                      }
+                        message: "Last name must be at least 2 characters",
+                      },
                     })}
                     error={errors.lastName?.message}
                     required
@@ -129,48 +149,64 @@ export default function RegisterPage() {
                     label="Email"
                     type="email"
                     placeholder="john.smith@email.com"
-                    {...register('email', {
-                      required: 'Email is required',
+                    {...register("email", {
+                      required: "Email is required",
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Please enter a valid email address'
-                      }
+                        message: "Please enter a valid email address",
+                      },
                     })}
                     error={errors.email?.message}
                     required
                   />
-                  <FormInput
-                    label="Phone Number"
-                    type="tel"
-                    placeholder="+20 123 456 7890"
-                    {...register('phone', {
-                      required: 'Phone number is required',
-                      pattern: {
-                        value: /^[\+]?[1-9][\d]{0,15}$/,
-                        message: 'Please enter a valid phone number'
-                      }
-                    })}
-                    error={errors.phone?.message}
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      name="phone"
+                      control={control}
+                      rules={{
+                        required: "Phone number is required",
+                        validate: (value) =>
+                          isValidPhoneNumber(value || "") ||
+                          "Please enter a valid phone number",
+                      }}
+                      render={({ field: { onChange, value } }) => (
+                        <PhoneInput
+                          international
+                          defaultCountry="EG"
+                          value={value}
+                          onChange={onChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sat-primary focus:border-transparent"
+                        />
+                      )}
+                    />
+                    {errors.phone && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.phone.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="relative">
                     <FormInput
                       label="Password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Create a strong password"
-                      {...register('password', {
-                        required: 'Password is required',
+                      {...register("password", {
+                        required: "Password is required",
                         minLength: {
                           value: 8,
-                          message: 'Password must be at least 8 characters'
+                          message: "Password must be at least 8 characters",
                         },
                         pattern: {
                           value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                          message: 'Password must contain uppercase, lowercase and number'
-                        }
+                          message:
+                            "Password must contain uppercase, lowercase and number",
+                        },
                       })}
                       error={errors.password?.message}
                       required
@@ -180,10 +216,10 @@ export default function RegisterPage() {
                       className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
                       onClick={() => setShowPassword(!showPassword)}
                       style={{
-                        position: 'relative',
-                        right: '12px',
-                        top: '-32px',
-                        float: 'right'
+                        position: "relative",
+                        right: "12px",
+                        top: "-32px",
+                        float: "right",
                       }}
                     >
                       {showPassword ? (
@@ -196,12 +232,12 @@ export default function RegisterPage() {
                   <div className="relative">
                     <FormInput
                       label="Confirm Password"
-                      type={showConfirmPassword ? 'text' : 'password'}
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm your password"
-                      {...register('confirmPassword', {
-                        required: 'Please confirm your password',
+                      {...register("confirmPassword", {
+                        required: "Please confirm your password",
                         validate: (value) =>
-                          value === password || 'Passwords do not match'
+                          value === password || "Passwords do not match",
                       })}
                       error={errors.confirmPassword?.message}
                       required
@@ -209,12 +245,14 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       style={{
-                        position: 'relative',
-                        right: '12px',
-                        top: '-32px',
-                        float: 'right'
+                        position: "relative",
+                        right: "12px",
+                        top: "-32px",
+                        float: "right",
                       }}
                     >
                       {showConfirmPassword ? (
@@ -237,8 +275,8 @@ export default function RegisterPage() {
                   <FormInput
                     label="Parent First Name"
                     placeholder="Jane"
-                    {...register('parentFirstName', {
-                      required: 'Parent first name is required'
+                    {...register("parentFirstName", {
+                      required: "Parent first name is required",
                     })}
                     error={errors.parentFirstName?.message}
                     required
@@ -246,8 +284,8 @@ export default function RegisterPage() {
                   <FormInput
                     label="Parent Last Name"
                     placeholder="Smith"
-                    {...register('parentLastName', {
-                      required: 'Parent last name is required'
+                    {...register("parentLastName", {
+                      required: "Parent last name is required",
                     })}
                     error={errors.parentLastName?.message}
                     required
@@ -255,30 +293,47 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <FormInput
-                    label="Parent Phone (WhatsApp)"
-                    type="tel"
-                    placeholder="+20 123 456 7890"
-                    {...register('parentPhone', {
-                      required: 'Parent phone number is required for WhatsApp updates',
-                      pattern: {
-                        value: /^[\+]?[1-9][\d]{0,15}$/,
-                        message: 'Please enter a valid phone number'
-                      }
-                    })}
-                    error={errors.parentPhone?.message}
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Parent Phone (WhatsApp){" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      name="parentPhone"
+                      control={control}
+                      rules={{
+                        required:
+                          "Parent phone number is required for WhatsApp updates",
+                        validate: (value) =>
+                          isValidPhoneNumber(value || "") ||
+                          "Please enter a valid phone number",
+                      }}
+                      render={({ field: { onChange, value } }) => (
+                        <PhoneInput
+                          international
+                          defaultCountry="EG"
+                          value={value}
+                          onChange={onChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sat-primary focus:border-transparent"
+                        />
+                      )}
+                    />
+                    {errors.parentPhone && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.parentPhone.message}
+                      </p>
+                    )}
+                  </div>
                   <FormInput
                     label="Parent Email"
                     type="email"
                     placeholder="jane.smith@email.com"
-                    {...register('parentEmail', {
-                      required: 'Parent email is required for notifications',
+                    {...register("parentEmail", {
+                      required: "Parent email is required for notifications",
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Please enter a valid email address'
-                      }
+                        message: "Please enter a valid email address",
+                      },
                     })}
                     error={errors.parentEmail?.message}
                     required
@@ -304,14 +359,14 @@ export default function RegisterPage() {
                     Creating account...
                   </>
                 ) : (
-                  'Create Account'
+                  "Create Account"
                 )}
               </Button>
             </form>
 
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Already have an account?{' '}
+                Already have an account?{" "}
                 <Link
                   to="/login"
                   className="font-medium text-sat-primary hover:text-blue-700"
@@ -324,5 +379,5 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

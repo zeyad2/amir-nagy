@@ -12,6 +12,9 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    headers: {
+      'Cache-Control': 'no-store',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -23,6 +26,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      }
+    }
   },
   define: {
     // For compatibility with some libraries that expect process.env
