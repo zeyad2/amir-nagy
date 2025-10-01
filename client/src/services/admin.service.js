@@ -78,6 +78,42 @@ export const adminService = {
     return api.get(`/admin/lessons/${id}/courses`)
   },
 
+  // Tests management
+  getAllTests: (filters = {}) => {
+    return api.get('/admin/assessments', { params: filters })
+  },
+
+  getTestById: (id) => {
+    return api.get(`/admin/assessments/${id}`)
+  },
+
+  createTest: (testData) => {
+    return api.post('/admin/assessments', testData)
+  },
+
+  updateTest: (id, testData) => {
+    return api.put(`/admin/assessments/${id}`, testData)
+  },
+
+  deleteTest: (id) => {
+    return api.delete(`/admin/assessments/${id}`)
+  },
+
+  getTestSubmissions: (id) => {
+    return api.get(`/admin/assessments/${id}/submissions`)
+  },
+
+  // Upload management
+  uploadPassageImage: (file) => {
+    const formData = new FormData()
+    formData.append('image', file)
+    return api.post('/admin/upload/passage-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
   // Analytics and reports
   getPerformanceAnalytics: (filters = {}) => {
     return api.get('/admin/analytics', { params: filters })

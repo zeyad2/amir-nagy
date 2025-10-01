@@ -155,23 +155,22 @@ export default function CourseForm({ course = null, onSuccess }) {
     setIsSubmitting(true)
 
     try {
-      // Prepare JSON data for API
-      const submitData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        type: formData.type,
-        status: formData.status
-      }
+      // Use FormData when there's a file to upload
+      const submitData = new FormData()
+
+      submitData.append('title', formData.title.trim())
+      submitData.append('description', formData.description.trim())
+      submitData.append('type', formData.type)
+      submitData.append('status', formData.status)
 
       // Add price for finished courses
       if (formData.type === 'finished' && formData.price) {
-        submitData.price = parseFloat(formData.price)
+        submitData.append('price', formData.price)
       }
 
-      // Note: File upload will be implemented in a future phase
-      // For now, we'll skip the thumbnail upload
-      if (formData.thumbnail && typeof formData.thumbnail === 'string') {
-        submitData.thumbnail = formData.thumbnail
+      // Add thumbnail if it's a new file
+      if (formData.thumbnail instanceof File) {
+        submitData.append('thumbnail', formData.thumbnail)
       }
 
       let response

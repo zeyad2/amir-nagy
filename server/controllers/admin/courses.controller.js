@@ -258,6 +258,26 @@ export const createCourse = async (req, res) => {
   try {
     const courseData = req.body;
 
+    // Validate required fields
+    if (!courseData.title || !courseData.description || !courseData.type) {
+      return createErrorResponse(res, 400, 'Title, description, and type are required');
+    }
+
+    // Validate type
+    if (!['live', 'finished'].includes(courseData.type)) {
+      return createErrorResponse(res, 400, 'Type must be either "live" or "finished"');
+    }
+
+    // Handle file upload
+    if (req.file) {
+      courseData.thumbnail = `/uploads/thumbnails/${req.file.filename}`;
+    }
+
+    // Convert price to float if present
+    if (courseData.price) {
+      courseData.price = parseFloat(courseData.price);
+    }
+
     const course = await Prisma.course.create({
       data: courseData
     });
@@ -305,6 +325,16 @@ export const updateCourse = async (req, res) => {
 
     if (!existingCourse) {
       return createErrorResponse(res, 404, 'Course not found');
+    }
+
+    // Handle file upload
+    if (req.file) {
+      updateData.thumbnail = `/uploads/thumbnails/${req.file.filename}`;
+    }
+
+    // Convert price to float if present
+    if (updateData.price) {
+      updateData.price = parseFloat(updateData.price);
     }
 
     const course = await Prisma.course.update({
