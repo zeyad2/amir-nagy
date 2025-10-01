@@ -28,13 +28,23 @@ const BreadcrumbItem = React.forwardRef(({ className, ...props }, ref) => (
 ))
 BreadcrumbItem.displayName = "BreadcrumbItem"
 
-const BreadcrumbLink = React.forwardRef(({ className, asChild, ...props }, ref) => {
+const BreadcrumbLink = React.forwardRef(({ className, asChild, children, ...props }, ref) => {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      ref,
+      className: cn("transition-colors hover:text-foreground", className, children.props.className),
+      ...props
+    })
+  }
+
   return (
     <a
       ref={ref}
       className={cn("transition-colors hover:text-foreground", className)}
       {...props}
-    />
+    >
+      {children}
+    </a>
   )
 })
 BreadcrumbLink.displayName = "BreadcrumbLink"

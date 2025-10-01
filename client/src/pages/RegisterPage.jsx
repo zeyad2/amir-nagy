@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../utils/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    phone: '',
-    parentFirstName: '',
-    parentLastName: '',
-    parentEmail: '',
-    parentPhone: ''
+    email: "",
+    password: "",
+    confirmPassword: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    phone: "",
+    parentFirstName: "",
+    parentLastName: "",
+    parentEmail: "",
+    parentPhone: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -24,15 +24,15 @@ const RegisterPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -42,46 +42,56 @@ const RegisterPage = () => {
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(formData.password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, and number';
+      newErrors.password =
+        "Password must contain uppercase, lowercase, and number";
     }
 
     // Confirm password
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     // Student information
-    const requiredFields = ['firstName', 'middleName', 'lastName', 'phone'];
-    requiredFields.forEach(field => {
+    const requiredFields = ["firstName", "middleName", "lastName", "phone"];
+    requiredFields.forEach((field) => {
       if (!formData[field]) {
-        newErrors[field] = `${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`;
+        newErrors[field] = `${field
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (str) => str.toUpperCase())} is required`;
       }
     });
 
     // Parent information
-    const parentFields = ['parentFirstName', 'parentLastName', 'parentEmail', 'parentPhone'];
-    parentFields.forEach(field => {
+    const parentFields = [
+      "parentFirstName",
+      "parentLastName",
+      "parentEmail",
+      "parentPhone",
+    ];
+    parentFields.forEach((field) => {
       if (!formData[field]) {
-        newErrors[field] = `${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} is required`;
+        newErrors[field] = `${field
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (str) => str.toUpperCase())} is required`;
       }
     });
 
     // Parent email validation
     if (formData.parentEmail && !/\S+@\S+\.\S+/.test(formData.parentEmail)) {
-      newErrors.parentEmail = 'Parent email is invalid';
+      newErrors.parentEmail = "Parent email is invalid";
     }
 
     setErrors(newErrors);
@@ -90,14 +100,14 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
     try {
       const { confirmPassword, ...registrationData } = formData;
       await register(registrationData);
-      navigate('/student');
+      navigate("/student");
     } catch (error) {
       // Error handling is done in the auth context
     } finally {
@@ -113,7 +123,7 @@ const RegisterPage = () => {
             Create your account
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link
               to="/login"
               className="font-medium text-blue-600 hover:text-blue-500"
@@ -144,7 +154,7 @@ const RegisterPage = () => {
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`form-input ${errors.email ? 'error' : ''}`}
+                      className={`form-input ${errors.email ? "error" : ""}`}
                       placeholder="student@example.com"
                     />
                     {errors.email && (
@@ -162,7 +172,7 @@ const RegisterPage = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={handleChange}
-                      className={`form-input ${errors.phone ? 'error' : ''}`}
+                      className={`form-input ${errors.phone ? "error" : ""}`}
                       placeholder="+20XXXXXXXXXX"
                     />
                     {errors.phone && (
@@ -180,7 +190,7 @@ const RegisterPage = () => {
                       type="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`form-input ${errors.password ? 'error' : ''}`}
+                      className={`form-input ${errors.password ? "error" : ""}`}
                       placeholder="Enter password"
                     />
                     {errors.password && (
@@ -198,7 +208,9 @@ const RegisterPage = () => {
                       type="password"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.confirmPassword ? "error" : ""
+                      }`}
                       placeholder="Confirm password"
                     />
                     {errors.confirmPassword && (
@@ -224,7 +236,9 @@ const RegisterPage = () => {
                       type="text"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className={`form-input ${errors.firstName ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.firstName ? "error" : ""
+                      }`}
                     />
                     {errors.firstName && (
                       <p className="form-error">{errors.firstName}</p>
@@ -233,7 +247,7 @@ const RegisterPage = () => {
 
                   <div className="form-group">
                     <label htmlFor="middleName" className="form-label">
-                      Middle Name *
+                      Middle Name * hello
                     </label>
                     <input
                       id="middleName"
@@ -241,7 +255,9 @@ const RegisterPage = () => {
                       type="text"
                       value={formData.middleName}
                       onChange={handleChange}
-                      className={`form-input ${errors.middleName ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.middleName ? "error" : ""
+                      }`}
                     />
                     {errors.middleName && (
                       <p className="form-error">{errors.middleName}</p>
@@ -258,7 +274,7 @@ const RegisterPage = () => {
                       type="text"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className={`form-input ${errors.lastName ? 'error' : ''}`}
+                      className={`form-input ${errors.lastName ? "error" : ""}`}
                     />
                     {errors.lastName && (
                       <p className="form-error">{errors.lastName}</p>
@@ -283,7 +299,9 @@ const RegisterPage = () => {
                       type="text"
                       value={formData.parentFirstName}
                       onChange={handleChange}
-                      className={`form-input ${errors.parentFirstName ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.parentFirstName ? "error" : ""
+                      }`}
                     />
                     {errors.parentFirstName && (
                       <p className="form-error">{errors.parentFirstName}</p>
@@ -300,7 +318,9 @@ const RegisterPage = () => {
                       type="text"
                       value={formData.parentLastName}
                       onChange={handleChange}
-                      className={`form-input ${errors.parentLastName ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.parentLastName ? "error" : ""
+                      }`}
                     />
                     {errors.parentLastName && (
                       <p className="form-error">{errors.parentLastName}</p>
@@ -317,7 +337,9 @@ const RegisterPage = () => {
                       type="email"
                       value={formData.parentEmail}
                       onChange={handleChange}
-                      className={`form-input ${errors.parentEmail ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.parentEmail ? "error" : ""
+                      }`}
                       placeholder="parent@example.com"
                     />
                     {errors.parentEmail && (
@@ -335,7 +357,9 @@ const RegisterPage = () => {
                       type="tel"
                       value={formData.parentPhone}
                       onChange={handleChange}
-                      className={`form-input ${errors.parentPhone ? 'error' : ''}`}
+                      className={`form-input ${
+                        errors.parentPhone ? "error" : ""
+                      }`}
                       placeholder="+20XXXXXXXXXX"
                     />
                     {errors.parentPhone && (
@@ -356,7 +380,7 @@ const RegisterPage = () => {
                     Creating account...
                   </div>
                 ) : (
-                  'Create Account'
+                  "Create Account"
                 )}
               </button>
             </form>
