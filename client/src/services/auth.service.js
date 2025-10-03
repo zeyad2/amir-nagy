@@ -72,7 +72,7 @@ export const authService = {
     try {
       const response = await api.post('/auth/reset-password', {
         token,
-        password
+        newPassword: password
       })
       return response.data
     } catch (error) {

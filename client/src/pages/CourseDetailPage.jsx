@@ -1,20 +1,48 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import api from '../services/api.service';
 import { useAuth } from '../utils/AuthContext';
+import { Button } from '../components/ui/button';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import toast from 'react-hot-toast';
 
 const CourseDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated, isStudent } = useAuth();
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
-  const { data, isLoading, error } = useQuery(
-    ['course', id],
-    () => axios.get(`/courses/${id}`).then(res => res.data),
-    {
-      enabled: !!id,
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['course', id],
+    queryFn: () => axios.get(`/api/courses/${id}`).then(res => res.data),
+    enabled: !!id,
+  });
+
+  // Enrollment request mutation
+  const enrollmentRequestMutation = useMutation({
+    mutationFn: (courseId) => api.post('/student/enrollment-requests', { courseId }),
+    onSuccess: () => {
+      setShowSuccessAlert(true);
+      queryClient.invalidateQueries(['course', id]);
+      setTimeout(() => setShowSuccessAlert(false), 5000);
+      toast.success('Enrollment request submitted successfully!');
+    },
+    onError: (error) => {
+      const errorMessage = error.response?.data?.error || 'Failed to request enrollment';
+      toast.error(errorMessage);
     }
-  );
+  });
+
+  const handleEnrollmentRequest = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    enrollmentRequestMutation.mutate(id);
+  };
 
   if (isLoading) {
     return (
@@ -37,16 +65,25 @@ const CourseDetailPage = () => {
     );
   }
 
-  const { course, enrollment, enrollmentRequest } = data;
+  const { course, enrollment, enrollmentRequest } = data?.data || {};
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        {/* Success Alert */}
+        {showSuccessAlert && (
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <AlertDescription className="text-green-800">
+              ✓ Enrollment request submitted successfully! The admin will review your request shortly.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Course Header */}
         <div className="card mb-8">
           {course.thumbnail && (
-            <img 
-              src={course.thumbnail} 
+            <img
+              src={`http://localhost:5000${course.thumbnail}`}
               alt={course.title}
               className="w-full h-64 object-cover"
             />
@@ -79,23 +116,33 @@ const CourseDetailPage = () => {
                     ✓ Enrolled
                   </div>
                 ) : enrollmentRequest ? (
-                  <div className={`px-4 py-2 rounded-lg ${
-                    enrollmentRequest.status === 'pending' 
+                  <div className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+                    enrollmentRequest.status === 'pending'
                       ? 'bg-yellow-100 text-yellow-800'
                       : enrollmentRequest.status === 'approved'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
+                    {enrollmentRequest.status === 'pending' && '⏳'}
+                    {enrollmentRequest.status === 'approved' && '✓'}
+                    {enrollmentRequest.status === 'rejected' && '✗'}
                     Request {enrollmentRequest.status}
                   </div>
                 ) : isAuthenticated && isStudent ? (
-                  <button className="btn btn-primary">
-                    Request Enrollment
-                  </button>
+                  <Button
+                    onClick={handleEnrollmentRequest}
+                    disabled={enrollmentRequestMutation.isLoading}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {enrollmentRequestMutation.isLoading ? 'Requesting...' : 'Request Enrollment'}
+                  </Button>
                 ) : !isAuthenticated ? (
-                  <a href="/register" className="btn btn-primary">
+                  <Button
+                    onClick={() => navigate('/register')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
                     Sign Up to Enroll
-                  </a>
+                  </Button>
                 ) : null}
               </div>
             </div>

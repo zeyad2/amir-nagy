@@ -10,7 +10,7 @@ const LandingPage = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const courses = coursesData?.courses || [];
+  const courses = coursesData?.data?.courses || [];
 
   return (
     <div>
@@ -93,47 +93,74 @@ const LandingPage = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {courses.map((course) => (
-                <div key={course.id} className="card">
-                  {course.thumbnail && (
-                    <img 
-                      src={course.thumbnail} 
-                      alt={course.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <div className="card-body">
-                    <h3 className="text-xl font-semibold mb-2">{course.title}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                <div key={course.id} className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
+                  {/* Course Thumbnail */}
+                  <div className="relative h-52 overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600">
+                    {course.thumbnail ? (
+                      <img
+                        src={`http://localhost:5000${course.thumbnail}`}
+                        alt={course.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-white text-6xl">📚</span>
+                      </div>
+                    )}
+                    {/* Course Type Badge */}
+                    <div className="absolute top-4 right-4">
+                      <span className={`px-4 py-1.5 rounded-full text-xs font-semibold shadow-lg ${
+                        course.type === 'live'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-blue-500 text-white'
+                      }`}>
+                        {course.type === 'live' ? '🔴 Live Sessions' : '📼 Self-Paced'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Course Content */}
+                  <div className="p-6">
+                    {/* Title */}
+                    <h3 className="text-xl font-bold mb-3 text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {course.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-gray-600 mb-4 line-clamp-2 text-sm leading-relaxed">
                       {course.description}
                     </p>
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        course.type === 'live' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {course.type === 'live' ? 'Live Sessions' : 'Self-Paced'}
-                      </span>
+
+                    {/* Course Stats */}
+                    <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <span>📖</span>
+                        <span>{course._count.courseLessons} lessons</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>📝</span>
+                        <span>{course._count.courseHomeworks} HW</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>📊</span>
+                        <span>{course._count.courseTests} tests</span>
+                      </div>
+                    </div>
+
+                    {/* Price and CTA */}
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                       {course.price && (
-                        <span className="text-lg font-bold text-blue-600">
-                          {course.price} EGP
-                        </span>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {course.price} <span className="text-sm font-normal text-gray-500">EGP</span>
+                        </div>
                       )}
+                      <Link
+                        to={`/courses/${course.id}`}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
+                      >
+                        View Details →
+                      </Link>
                     </div>
-
-                    <div className="text-sm text-gray-500 mb-4">
-                      {course._count.courseLessons} lessons • 
-                      {course._count.courseHomeworks} homework • 
-                      {course._count.courseTests} tests
-                    </div>
-
-                    <Link 
-                      to={`/courses/${course.id}`}
-                      className="btn btn-primary w-full"
-                    >
-                      View Details
-                    </Link>
                   </div>
                 </div>
               ))}

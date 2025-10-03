@@ -10,6 +10,226 @@ import { getAccessibleSessions } from "../middlewares/accessValidation.middlewar
  * Get access status for a course (for students)
  * GET /api/courses/:id/access-status
  */
+/**
+ * Get all published courses (public access)
+ * GET /api/courses
+ */
+export const getPublicCourses = async (req, res) => {
+  try {
+    const courses = await Prisma.course.findMany({
+      where: {
+        status: 'published',
+        deletedAt: null
+      },
+      include: {
+        _count: {
+          select: {
+            courseLessons: true,
+            courseHomeworks: true,
+            courseTests: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const coursesResponse = courses.map(course => ({
+      id: course.id.toString(),
+      title: course.title,
+      description: course.description,
+      type: course.type,
+      price: course.price,
+      thumbnail: course.thumbnail,
+      status: course.status,
+      _count: course._count,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt
+    }));
+
+    return createResponse(res, 200, 'Courses fetched successfully', {
+      courses: coursesResponse,
+      total: coursesResponse.length
+    });
+  } catch (error) {
+    console.error('Error fetching public courses:', error);
+    return createErrorResponse(res, 500, 'Failed to fetch courses');
+  }
+};
+
+/**
+ * Get a specific course details (public/student access)
+ * GET /api/courses/:id
+ */
+export const getPublicCourseDetail = async (req, res) => {
+  try {
+    const { id: courseId } = req.params;
+    const userId = req.user?.userId; // Optional - may not be authenticated
+
+    // Get the course with all details
+    const course = await Prisma.course.findFirst({
+      where: {
+        id: BigInt(courseId),
+        status: 'published',
+        deletedAt: null
+      },
+      include: {
+        courseLessons: {
+          include: {
+            lesson: {
+              select: {
+                id: true,
+                title: true
+              }
+            }
+          }
+        },
+        courseHomeworks: {
+          include: {
+            homework: {
+              select: {
+                id: true,
+                title: true
+              }
+            }
+          }
+        },
+        courseTests: {
+          include: {
+            test: {
+              select: {
+                id: true,
+                title: true,
+                duration: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            courseLessons: true,
+            courseHomeworks: true,
+            courseTests: true
+          }
+        }
+      }
+    });
+
+    if (!course) {
+      return createErrorResponse(res, 404, 'Course not found');
+    }
+
+    // Prepare response data
+    const courseResponse = {
+      id: course.id.toString(),
+      title: course.title,
+      description: course.description,
+      type: course.type,
+      price: course.price,
+      thumbnail: course.thumbnail,
+      status: course.status,
+      courseLessons: course.courseLessons.map(cl => ({
+        id: cl.id.toString(),
+        order: cl.order,
+        lesson: {
+          id: cl.lesson.id.toString(),
+          title: cl.lesson.title
+        }
+      })),
+      courseHomeworks: course.courseHomeworks.map(ch => ({
+        id: ch.id.toString(),
+        order: ch.order,
+        dueDate: ch.dueDate,
+        homework: {
+          id: ch.homework.id.toString(),
+          title: ch.homework.title
+        }
+      })),
+      courseTests: course.courseTests.map(ct => ({
+        id: ct.id.toString(),
+        order: ct.order,
+        dueDate: ct.dueDate,
+        test: {
+          id: ct.test.id.toString(),
+          title: ct.test.title,
+          duration: ct.test.duration
+        }
+      })),
+      _count: course._count,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt
+    };
+
+    // If user is authenticated, check enrollment status
+    let enrollment = null;
+    let enrollmentRequest = null;
+
+    if (userId) {
+      // Get student record
+      const student = await Prisma.student.findUnique({
+        where: { uuid: BigInt(userId) }
+      });
+
+      if (student) {
+        // Check enrollment
+        enrollment = await Prisma.enrollment.findFirst({
+          where: {
+            studentId: student.uuid,
+            courseId: BigInt(courseId),
+            deletedAt: null
+          },
+          select: {
+            id: true,
+            status: true,
+            enrolledAt: true
+          }
+        });
+
+        // Check enrollment request
+        if (!enrollment) {
+          enrollmentRequest = await Prisma.enrollmentRequest.findFirst({
+            where: {
+              studentId: student.uuid,
+              courseId: BigInt(courseId)
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            select: {
+              id: true,
+              status: true,
+              createdAt: true
+            }
+          });
+        }
+      }
+    }
+
+    // Convert BigInt to string for enrollment/enrollmentRequest
+    const enrollmentResponse = enrollment ? {
+      id: enrollment.id.toString(),
+      status: enrollment.status,
+      enrolledAt: enrollment.enrolledAt
+    } : null;
+
+    const enrollmentRequestResponse = enrollmentRequest ? {
+      id: enrollmentRequest.id.toString(),
+      status: enrollmentRequest.status,
+      createdAt: enrollmentRequest.createdAt
+    } : null;
+
+    return createResponse(res, 200, 'Course details fetched successfully', {
+      course: courseResponse,
+      enrollment: enrollmentResponse,
+      enrollmentRequest: enrollmentRequestResponse
+    });
+  } catch (error) {
+    console.error('Error fetching course details:', error);
+    return createErrorResponse(res, 500, 'Failed to fetch course details');
+  }
+};
+
 export const getCourseAccessStatus = async (req, res) => {
   try {
     const { id: courseId } = req.params;

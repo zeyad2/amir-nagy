@@ -4,15 +4,29 @@
  */
 import { Router } from "express";
 import {
+  getPublicCourses,
+  getPublicCourseDetail,
   getCourseAccessStatus,
   getAccessibleCourseSessions,
   validateSessionContentAccess
 } from "../controllers/courses.controller.js";
 import { validateParams } from "../middlewares/validation.middleware.js";
 import { requireUser } from "../middlewares/requireUser.js";
+import { optionalAuth } from "../middlewares/optionalAuth.js";
 import { courseIdSchema } from "../schemas/course.schemas.js";
 
 const coursesRouter = Router();
+
+// Public endpoints (no auth required)
+// GET /api/courses - Get all published courses
+coursesRouter.get('/', getPublicCourses);
+
+// GET /api/courses/:id - Get specific course details (with optional auth for enrollment status)
+coursesRouter.get('/:id',
+  optionalAuth, // Optional authentication to check enrollment status
+  validateParams(courseIdSchema),
+  getPublicCourseDetail
+);
 
 // GET /api/courses/:id/access-status - Get course access status for current user
 coursesRouter.get('/:id/access-status',
