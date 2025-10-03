@@ -25,6 +25,7 @@ import {
   removeContentParamsSchema,
   removeContentQuerySchema
 } from "../../schemas/course.schemas.js";
+import { uploadThumbnail, handleUploadError } from "../../middlewares/upload.middleware.js";
 
 const coursesRouter = Router();
 
@@ -42,14 +43,16 @@ coursesRouter.get('/:id',
 
 // POST /api/admin/courses - Create a new course
 coursesRouter.post('/',
-  validateSchema(createCourseSchema),
+  uploadThumbnail,
+  handleUploadError,
   createCourse
 );
 
 // PUT /api/admin/courses/:id - Update a course
 coursesRouter.put('/:id',
   validateParams(courseIdSchema),
-  validateSchema(updateCourseSchema),
+  uploadThumbnail,
+  handleUploadError,
   updateCourse
 );
 

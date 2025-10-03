@@ -12,6 +12,7 @@ import { Plus, Search, Edit, Trash2, ExternalLink, Calendar } from 'lucide-react
 import toast from 'react-hot-toast'
 import { adminService } from '@/services/admin.service'
 import { formatDate } from '@/utils/helpers'
+import TestBuilder from '@/components/admin/tests/TestBuilder'
 
 export default function AdminResources() {
   const [activeTab, setActiveTab] = useState('lessons')
@@ -273,10 +274,7 @@ export default function AdminResources() {
             </TabsContent>
 
             <TabsContent value="tests" className="space-y-6">
-              <div className="text-center py-8">
-                <h3 className="text-lg font-semibold mb-2">Tests Management</h3>
-                <p className="text-muted-foreground">Test builder will be available in the next phase.</p>
-              </div>
+              <TestBuilder />
             </TabsContent>
           </Tabs>
         </CardContent>

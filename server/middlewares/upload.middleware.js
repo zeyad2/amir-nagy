@@ -6,20 +6,37 @@ import path from "path";
 import fs from "fs";
 import { createErrorResponse } from '../utils/response.utils.js';
 
-// Ensure uploads directory exists
-const uploadsDir = "./uploads/passages";
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Ensure uploads directories exist
+const passagesDir = "./uploads/passages";
+const thumbnailsDir = "./uploads/thumbnails";
+
+if (!fs.existsSync(passagesDir)) {
+  fs.mkdirSync(passagesDir, { recursive: true });
 }
 
-// Configure storage
-const storage = multer.diskStorage({
+if (!fs.existsSync(thumbnailsDir)) {
+  fs.mkdirSync(thumbnailsDir, { recursive: true });
+}
+
+// Configure storage for passages
+const passageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    cb(null, passagesDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, 'passage-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// Configure storage for thumbnails
+const thumbnailStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, thumbnailsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'thumbnail-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -32,9 +49,19 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configure multer
-const upload = multer({
-  storage,
+// Configure multer for passages
+const passageUpload = multer({
+  storage: passageStorage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 1 // Only one file at a time
+  }
+});
+
+// Configure multer for thumbnails
+const thumbnailUpload = multer({
+  storage: thumbnailStorage,
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
@@ -43,7 +70,8 @@ const upload = multer({
 });
 
 // Export configured middleware
-export const uploadPassageImage = upload.single('image');
+export const uploadPassageImage = passageUpload.single('image');
+export const uploadThumbnail = thumbnailUpload.single('thumbnail');
 
 // Error handling middleware for multer errors
 export const handleUploadError = (err, req, res, next) => {
