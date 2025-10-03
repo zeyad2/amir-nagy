@@ -13,7 +13,7 @@ const choiceSchema = Joi.object({
   isCorrect: Joi.boolean().required().messages({
     'any.required': 'isCorrect field is required for each choice'
   }),
-  order: Joi.number().integer().min(1).max(4).optional()
+  order: Joi.number().integer().min(0).max(3).optional()
 });
 
 const questionSchema = Joi.object({
@@ -35,7 +35,7 @@ const questionSchema = Joi.object({
       'any.required': 'Choices are required for each question',
       'custom.exactlyOneCorrect': 'Exactly one choice must be marked as correct'
     }),
-  order: Joi.number().integer().min(1).optional()
+  order: Joi.number().integer().min(0).optional()
 });
 
 const passageSchema = Joi.object({
@@ -50,7 +50,7 @@ const passageSchema = Joi.object({
     'array.min': 'Each passage must have at least one question',
     'any.required': 'Questions are required for each passage'
   }),
-  order: Joi.number().integer().min(1).optional()
+  order: Joi.number().integer().min(0).optional()
 });
 
 export const createHomeworkSchema = Joi.object({
