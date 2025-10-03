@@ -103,6 +103,31 @@ export const adminService = {
     return api.get(`/admin/assessments/${id}/submissions`)
   },
 
+  // Homework management
+  getAllHomework: (filters = {}) => {
+    return api.get('/admin/homework', { params: filters })
+  },
+
+  getHomeworkById: (id) => {
+    return api.get(`/admin/homework/${id}`)
+  },
+
+  createHomework: (homeworkData) => {
+    return api.post('/admin/homework', homeworkData)
+  },
+
+  updateHomework: (id, homeworkData) => {
+    return api.put(`/admin/homework/${id}`, homeworkData)
+  },
+
+  deleteHomework: (id) => {
+    return api.delete(`/admin/homework/${id}`)
+  },
+
+  getHomeworkSubmissions: (id) => {
+    return api.get(`/admin/homework/${id}/submissions`)
+  },
+
   // Upload management
   uploadPassageImage: (file) => {
     const formData = new FormData()
