@@ -112,7 +112,11 @@ export default function AdminResources() {
 
   // Handle lesson deletion
   const handleDeleteLesson = async (lesson) => {
-    if (!confirm(`Are you sure you want to delete "${lesson.title}"?`)) {
+    const confirmMessage = lesson.usageCount > 0
+      ? `Are you sure you want to delete "${lesson.title}"?\n\nThis lesson is used in ${lesson.usageCount} course(s). It will be removed from all courses.`
+      : `Are you sure you want to delete "${lesson.title}"?`
+
+    if (!confirm(confirmMessage)) {
       return
     }
 
