@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import api from '../services/api.service';
 import { useAuth } from '../utils/AuthContext';
 import { Button } from '../components/ui/button';
@@ -17,7 +16,7 @@ const CourseDetailPage = () => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['course', id],
-    queryFn: () => axios.get(`/api/courses/${id}`).then(res => res.data),
+    queryFn: () => api.get(`/courses/${id}`).then(res => res.data),
     enabled: !!id,
   });
 
@@ -67,6 +66,9 @@ const CourseDetailPage = () => {
 
   const { course, enrollment, enrollmentRequest } = data?.data || {};
 
+  // Check if student has active enrollment
+  const isEnrolled = enrollment && enrollment.status === 'active';
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -96,8 +98,8 @@ const CourseDetailPage = () => {
                 </h1>
                 <div className="flex items-center space-x-4 mb-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    course.type === 'live' 
-                      ? 'bg-green-100 text-green-800' 
+                    course.type === 'live'
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-blue-100 text-blue-800'
                   }`}>
                     {course.type === 'live' ? 'Live Sessions' : 'Self-Paced'}
@@ -109,9 +111,9 @@ const CourseDetailPage = () => {
                   )}
                 </div>
               </div>
-              
+
               <div className="text-right">
-                {enrollment ? (
+                {isEnrolled ? (
                   <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
                     ✓ Enrolled
                   </div>
@@ -132,7 +134,7 @@ const CourseDetailPage = () => {
                   <Button
                     onClick={handleEnrollmentRequest}
                     disabled={enrollmentRequestMutation.isLoading}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 mt-3"
                   >
                     {enrollmentRequestMutation.isLoading ? 'Requesting...' : 'Request Enrollment'}
                   </Button>
@@ -170,10 +172,10 @@ const CourseDetailPage = () => {
                       <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
                         {index + 1}
                       </span>
-                      <span className={enrollment ? 'text-gray-900' : 'text-gray-500'}>
+                      <span className={isEnrolled ? 'text-gray-900' : 'text-gray-500'}>
                         {courseLesson.lesson.title}
                       </span>
-                      {!enrollment && (
+                      {!isEnrolled && (
                         <span className="ml-auto text-xs text-gray-400">🔒</span>
                       )}
                     </li>
@@ -198,10 +200,10 @@ const CourseDetailPage = () => {
                       <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
                         {index + 1}
                       </span>
-                      <span className={enrollment ? 'text-gray-900' : 'text-gray-500'}>
+                      <span className={isEnrolled ? 'text-gray-900' : 'text-gray-500'}>
                         {courseHomework.homework.title}
                       </span>
-                      {!enrollment && (
+                      {!isEnrolled && (
                         <span className="ml-auto text-xs text-gray-400">🔒</span>
                       )}
                     </li>
@@ -226,10 +228,10 @@ const CourseDetailPage = () => {
                       <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
                         {index + 1}
                       </span>
-                      <span className={enrollment ? 'text-gray-900' : 'text-gray-500'}>
+                      <span className={isEnrolled ? 'text-gray-900' : 'text-gray-500'}>
                         {courseTest.test.title}
                       </span>
-                      {!enrollment && (
+                      {!isEnrolled && (
                         <span className="ml-auto text-xs text-gray-400">🔒</span>
                       )}
                     </li>
