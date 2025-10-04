@@ -10,6 +10,10 @@ import {
   getStudentEnrollmentRequests,
   cancelEnrollmentRequest
 } from "../controllers/student/enrollment.controller.js";
+import {
+  getStudentDashboard,
+  getEnrolledCourses
+} from "../controllers/student/dashboard.controller.js";
 import { validateSchema, validateParams } from "../middlewares/validation.middleware.js";
 import {
   createEnrollmentRequestSchema,
@@ -22,6 +26,10 @@ const studentRouter = Router();
 // Apply authentication middleware to all student routes
 studentRouter.use(requireUser);
 studentRouter.use(requireStudent);
+
+// Dashboard routes
+studentRouter.get('/dashboard', getStudentDashboard);
+studentRouter.get('/courses', getEnrolledCourses);
 
 // Enrollment request routes
 studentRouter.post('/enrollment-requests',
