@@ -204,7 +204,7 @@ export const updateLesson = async (req, res) => {
 };
 
 /**
- * Delete a lesson (with usage check)
+ * Delete a lesson (cascade deletes associated CourseLessons)
  * DELETE /api/admin/lessons/:id
  */
 export const deleteLesson = async (req, res) => {
@@ -213,30 +213,14 @@ export const deleteLesson = async (req, res) => {
 
     // Check if lesson exists
     const lesson = await Prisma.lesson.findUnique({
-      where: { id: BigInt(id) },
-      include: {
-        courseLessons: {
-          include: {
-            course: {
-              select: { id: true, title: true }
-            }
-          }
-        }
-      }
+      where: { id: BigInt(id) }
     });
 
     if (!lesson) {
       return createErrorResponse(res, 404, 'Lesson not found');
     }
 
-    // Check if lesson is used in any courses
-    if (lesson.courseLessons.length > 0) {
-      const courseNames = lesson.courseLessons.map(cl => cl.course.title).join(', ');
-      return createErrorResponse(res, 400,
-        `Cannot delete lesson. It is currently used in the following course(s): ${courseNames}`
-      );
-    }
-
+    // Delete lesson (CourseLesson associations will be cascade deleted automatically)
     await Prisma.lesson.delete({
       where: { id: BigInt(id) }
     });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api.service';
@@ -6,6 +6,7 @@ import { useAuth } from '../utils/AuthContext';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import toast from 'react-hot-toast';
+import LessonViewer from '../components/LessonViewer';
 
 const CourseDetailPage = () => {
   const { id } = useParams();
@@ -13,6 +14,7 @@ const CourseDetailPage = () => {
   const queryClient = useQueryClient();
   const { isAuthenticated, isStudent } = useAuth();
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['course', id],
@@ -43,6 +45,20 @@ const CourseDetailPage = () => {
     enrollmentRequestMutation.mutate(id);
   };
 
+  // Auto-select first lesson when enrolled and lessons are available
+  // Must be before early returns to comply with Rules of Hooks
+  const { course, enrollment, enrollmentRequest } = data?.data || {};
+  const isEnrolled = enrollment && enrollment.status === 'active';
+
+  useEffect(() => {
+    if (isEnrolled && course?.courseLessons?.length > 0 && !selectedLesson) {
+      const firstLesson = course.courseLessons[0]?.lesson;
+      if (firstLesson && firstLesson.videoLink) {
+        setSelectedLesson(firstLesson);
+      }
+    }
+  }, [isEnrolled, course, selectedLesson]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -64,14 +80,9 @@ const CourseDetailPage = () => {
     );
   }
 
-  const { course, enrollment, enrollmentRequest } = data?.data || {};
-
-  // Check if student has active enrollment
-  const isEnrolled = enrollment && enrollment.status === 'active';
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+      <div className={isEnrolled ? 'max-w-7xl mx-auto' : 'max-w-4xl mx-auto'}>
         {/* Success Alert */}
         {showSuccessAlert && (
           <Alert className="mb-6 bg-green-50 border-green-200">
@@ -156,91 +167,191 @@ const CourseDetailPage = () => {
         </div>
 
         {/* Course Content */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Lessons */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-xl font-semibold">Lessons</h2>
-            </div>
-            <div className="card-body">
-              {course.courseLessons.length === 0 ? (
-                <p className="text-gray-500">No lessons available</p>
-              ) : (
-                <ul className="space-y-2">
-                  {course.courseLessons.map((courseLesson, index) => (
-                    <li key={courseLesson.id} className="flex items-center p-2 rounded border">
-                      <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
-                        {index + 1}
-                      </span>
-                      <span className={isEnrolled ? 'text-gray-900' : 'text-gray-500'}>
-                        {courseLesson.lesson.title}
-                      </span>
-                      {!isEnrolled && (
-                        <span className="ml-auto text-xs text-gray-400">🔒</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+        {isEnrolled ? (
+          /* Enrolled Student View - Learning Interface */
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Sidebar - Course Resources */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Lessons */}
+              <div className="card">
+                <div className="card-header">
+                  <h2 className="text-lg font-semibold">Lessons</h2>
+                </div>
+                <div className="card-body">
+                  {course.courseLessons.length === 0 ? (
+                    <p className="text-sm text-gray-500">No lessons available</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {course.courseLessons.map((courseLesson, index) => (
+                        <li key={courseLesson.id}>
+                          <button
+                            onClick={() => setSelectedLesson(courseLesson.lesson)}
+                            className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+                              selectedLesson?.id === courseLesson.lesson.id
+                                ? 'bg-blue-100 border-2 border-blue-500'
+                                : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                            }`}
+                          >
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium mr-3 ${
+                              selectedLesson?.id === courseLesson.lesson.id
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-blue-100 text-blue-600'
+                            }`}>
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-medium text-gray-900 text-left flex-1">
+                              {courseLesson.lesson.title}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
-          {/* Homework */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-xl font-semibold">Homework</h2>
-            </div>
-            <div className="card-body">
-              {course.courseHomeworks.length === 0 ? (
-                <p className="text-gray-500">No homework assigned</p>
-              ) : (
-                <ul className="space-y-2">
-                  {course.courseHomeworks.map((courseHomework, index) => (
-                    <li key={courseHomework.id} className="flex items-center p-2 rounded border">
-                      <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
-                        {index + 1}
-                      </span>
-                      <span className={isEnrolled ? 'text-gray-900' : 'text-gray-500'}>
-                        {courseHomework.homework.title}
-                      </span>
-                      {!isEnrolled && (
-                        <span className="ml-auto text-xs text-gray-400">🔒</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+              {/* Homework */}
+              <div className="card">
+                <div className="card-header">
+                  <h2 className="text-lg font-semibold">Homework</h2>
+                </div>
+                <div className="card-body">
+                  {course.courseHomeworks.length === 0 ? (
+                    <p className="text-sm text-gray-500">No homework assigned</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {course.courseHomeworks.map((courseHomework, index) => (
+                        <li key={courseHomework.id}>
+                          <button className="w-full flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <span className="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-medium text-gray-900 text-left flex-1">
+                              {courseHomework.homework.title}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
-          {/* Tests */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-xl font-semibold">Tests</h2>
+              {/* Tests */}
+              <div className="card">
+                <div className="card-header">
+                  <h2 className="text-lg font-semibold">Tests</h2>
+                </div>
+                <div className="card-body">
+                  {course.courseTests.length === 0 ? (
+                    <p className="text-sm text-gray-500">No tests available</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {course.courseTests.map((courseTest, index) => (
+                        <li key={courseTest.id}>
+                          <button className="w-full flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-medium text-gray-900 text-left flex-1">
+                              {courseTest.test.title}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="card-body">
-              {course.courseTests.length === 0 ? (
-                <p className="text-gray-500">No tests available</p>
-              ) : (
-                <ul className="space-y-2">
-                  {course.courseTests.map((courseTest, index) => (
-                    <li key={courseTest.id} className="flex items-center p-2 rounded border">
-                      <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
-                        {index + 1}
-                      </span>
-                      <span className={isEnrolled ? 'text-gray-900' : 'text-gray-500'}>
-                        {courseTest.test.title}
-                      </span>
-                      {!isEnrolled && (
-                        <span className="ml-auto text-xs text-gray-400">🔒</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+
+            {/* Main Content Area - Lesson Viewer */}
+            <div className="lg:col-span-3">
+              <LessonViewer lesson={selectedLesson} />
             </div>
           </div>
-        </div>
+        ) : (
+          /* Non-Enrolled View - Preview Only */
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Lessons */}
+            <div className="card">
+              <div className="card-header">
+                <h2 className="text-xl font-semibold">Lessons</h2>
+              </div>
+              <div className="card-body">
+                {course.courseLessons.length === 0 ? (
+                  <p className="text-gray-500">No lessons available</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {course.courseLessons.map((courseLesson, index) => (
+                      <li key={courseLesson.id} className="flex items-center p-2 rounded border">
+                        <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-500">
+                          {courseLesson.lesson.title}
+                        </span>
+                        <span className="ml-auto text-xs text-gray-400">🔒</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Homework */}
+            <div className="card">
+              <div className="card-header">
+                <h2 className="text-xl font-semibold">Homework</h2>
+              </div>
+              <div className="card-body">
+                {course.courseHomeworks.length === 0 ? (
+                  <p className="text-gray-500">No homework assigned</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {course.courseHomeworks.map((courseHomework, index) => (
+                      <li key={courseHomework.id} className="flex items-center p-2 rounded border">
+                        <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-500">
+                          {courseHomework.homework.title}
+                        </span>
+                        <span className="ml-auto text-xs text-gray-400">🔒</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Tests */}
+            <div className="card">
+              <div className="card-header">
+                <h2 className="text-xl font-semibold">Tests</h2>
+              </div>
+              <div className="card-body">
+                {course.courseTests.length === 0 ? (
+                  <p className="text-gray-500">No tests available</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {course.courseTests.map((courseTest, index) => (
+                      <li key={courseTest.id} className="flex items-center p-2 rounded border">
+                        <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-500">
+                          {courseTest.test.title}
+                        </span>
+                        <span className="ml-auto text-xs text-gray-400">🔒</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Instructor Info */}
         <div className="card mt-8">

@@ -80,9 +80,13 @@ export const getPublicCourseDetail = async (req, res) => {
             lesson: {
               select: {
                 id: true,
-                title: true
+                title: true,
+                videoLink: true
               }
             }
+          },
+          orderBy: {
+            order: 'asc'
           }
         },
         courseHomeworks: {
@@ -182,7 +186,7 @@ export const getPublicCourseDetail = async (req, res) => {
           select: {
             id: true,
             status: true,
-            enrolledAt: true
+            createdAt: true
           }
         });
 
@@ -206,11 +210,25 @@ export const getPublicCourseDetail = async (req, res) => {
       }
     }
 
+    // Check if user has active enrollment
+    const isEnrolled = enrollment && enrollment.status === 'active';
+
+    // If enrolled, add videoLink to lessons
+    if (isEnrolled) {
+      courseResponse.courseLessons = courseResponse.courseLessons.map(cl => ({
+        ...cl,
+        lesson: {
+          ...cl.lesson,
+          videoLink: course.courseLessons.find(l => l.id === BigInt(cl.id))?.lesson.videoLink
+        }
+      }));
+    }
+
     // Convert BigInt to string for enrollment/enrollmentRequest
     const enrollmentResponse = enrollment ? {
       id: enrollment.id.toString(),
       status: enrollment.status,
-      enrolledAt: enrollment.enrolledAt
+      createdAt: enrollment.createdAt
     } : null;
 
     const enrollmentRequestResponse = enrollmentRequest ? {
