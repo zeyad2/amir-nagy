@@ -94,7 +94,7 @@ export const getCourses = async (req, res) => {
         totalTests: course.courseTests.length,
         totalContent: course.courseLessons.length + course.courseHomeworks.length + course.courseTests.length
       },
-      canDelete: course.enrollments.length === 0 && course.enrollmentRequests.length === 0
+      canDelete: true // Cascade deletes handle all related records
     }));
 
     return createResponse(res, 200, 'Courses fetched successfully', {
@@ -240,7 +240,7 @@ export const getCourse = async (req, res) => {
         email: request.student.user.email,
         requestDate: request.requestedAt
       })),
-      canDelete: course.enrollments.length === 0 && course.enrollmentRequests.length === 0
+      canDelete: true // Cascade deletes handle all related records
     };
 
     return createResponse(res, 200, 'Course fetched successfully', { course: courseWithDetails });
@@ -367,28 +367,20 @@ export const updateCourse = async (req, res) => {
 };
 
 /**
- * Delete a course (soft delete with enrollment check)
+ * Delete a course (soft delete with cascade)
  * DELETE /api/admin/courses/:id
+ * Note: Cascade deletes will remove all related enrollments, enrollment requests,
+ * course associations (lessons/homework/tests), sessions, and access windows
  */
 export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if course exists and get enrollment information
+    // Check if course exists
     const course = await Prisma.course.findFirst({
       where: {
         id: BigInt(id),
         deletedAt: null
-      },
-      include: {
-        enrollments: {
-          where: { status: 'active' },
-          select: { id: true }
-        },
-        enrollmentRequests: {
-          where: { status: 'pending' },
-          select: { id: true }
-        }
       }
     });
 
@@ -396,25 +388,12 @@ export const deleteCourse = async (req, res) => {
       return createErrorResponse(res, 404, 'Course not found');
     }
 
-    // Check if course has active enrollments or pending requests
-    if (course.enrollments.length > 0) {
-      return createErrorResponse(res, 400,
-        `Cannot delete course. It has ${course.enrollments.length} active enrollment(s)`
-      );
-    }
-
-    if (course.enrollmentRequests.length > 0) {
-      return createErrorResponse(res, 400,
-        `Cannot delete course. It has ${course.enrollmentRequests.length} pending enrollment request(s)`
-      );
-    }
-
-    // Soft delete the course
+    // Soft delete the course (cascade will handle related records via Prisma schema)
     await Prisma.course.update({
       where: { id: BigInt(id) },
       data: {
         deletedAt: new Date(),
-        status: 'archived' // Archive when deleted
+        status: 'archived'
       }
     });
 

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { Plus, Search, Edit, Trash2, Clock, FileText, Calendar, AlertCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Clock, FileText, Calendar } from 'lucide-react'
 import { formatDate } from '@/utils/helpers'
 import {
   AlertDialog,
@@ -155,8 +155,7 @@ export default function TestList({ tests, loading, onCreateNew, onEdit, onDelete
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeleteClick(test)}
-                              disabled={!test.canDelete}
-                              className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                              className="text-red-600 hover:text-red-800"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -170,15 +169,6 @@ export default function TestList({ tests, loading, onCreateNew, onEdit, onDelete
             )}
           </div>
 
-          {/* Info message about deletion restrictions */}
-          {filteredTests.some(test => !test.canDelete) && (
-            <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <p className="text-amber-800">
-                Tests that are assigned to courses or have student submissions cannot be deleted.
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -188,7 +178,7 @@ export default function TestList({ tests, loading, onCreateNew, onEdit, onDelete
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Test?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteDialog.test?.title}"? This action cannot be undone.
+              Are you sure you want to delete "{deleteDialog.test?.title}"? This will permanently remove the test, all its passages, questions, course assignments, and student submissions. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

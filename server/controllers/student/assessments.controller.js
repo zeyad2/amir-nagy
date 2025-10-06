@@ -328,7 +328,16 @@ export const getAssessmentSubmission = async (req, res) => {
           include: {
             question: {
               include: {
-                choices: true
+                choices: true,
+                passage: {
+                  select: {
+                    id: true,
+                    title: true,
+                    content: true,
+                    imageURL: true,
+                    order: true
+                  }
+                }
               }
             },
             choice: true
@@ -356,6 +365,13 @@ export const getAssessmentSubmission = async (req, res) => {
         selectedChoiceId: answer.choiceId?.toString() || null,
         selectedChoiceText: answer.choice?.choiceText || 'Not answered',
         isCorrect: answer.isCorrect,
+        passage: answer.question.passage ? {
+          id: answer.question.passage.id.toString(),
+          title: answer.question.passage.title,
+          content: answer.question.passage.content,
+          imageURL: answer.question.passage.imageURL,
+          order: answer.question.passage.order
+        } : null,
         allChoices: answer.question.choices.map(choice => ({
           id: choice.id.toString(),
           text: choice.choiceText,

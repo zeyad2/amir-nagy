@@ -17,6 +17,7 @@ import StudentDashboard from '@/pages/student/StudentDashboard'
 import StudentCourses from '@/pages/student/StudentCourses'
 import CourseLearnPage from '@/pages/student/CourseLearnPage'
 import AssessmentPage from '@/pages/student/AssessmentPage'
+import AssessmentTakingPage from '@/pages/student/AssessmentTakingPage'
 import PerformancePage from '@/pages/student/PerformancePage'
 
 // Admin Pages
@@ -105,6 +106,14 @@ export function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={['student']}>
               <AssessmentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="courses/:courseId/assessments/:type/:assessmentId"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <AssessmentTakingPage />
             </ProtectedRoute>
           }
         />
