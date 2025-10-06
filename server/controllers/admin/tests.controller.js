@@ -75,7 +75,7 @@ export const getTests = async (req, res) => {
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: test._count.courseTests === 0 && test._count.submissions === 0
+      canDelete: true // Cascade deletes handle all related records
     }));
 
     return createResponse(res, 200, 'Tests fetched successfully', {
@@ -172,7 +172,7 @@ export const getTestById = async (req, res) => {
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: test.courseTests.length === 0 && test._count.submissions === 0
+      canDelete: true // Cascade deletes handle all related records
     };
 
     return createResponse(res, 200, 'Test fetched successfully', { test: testData });
@@ -369,52 +369,25 @@ export const updateTest = async (req, res) => {
 };
 
 /**
- * Delete test (with usage and submission check)
+ * Delete test (cascade deletes all related data)
  * DELETE /api/admin/tests/:id
+ * Note: Cascade deletes will remove all related passages, questions, choices,
+ * course associations (CourseTest), and student submissions
  */
 export const deleteTest = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if test exists and get usage information
+    // Check if test exists
     const test = await Prisma.test.findUnique({
-      where: { id: BigInt(id) },
-      include: {
-        courseTests: {
-          include: {
-            course: {
-              select: { id: true, title: true }
-            }
-          }
-        },
-        _count: {
-          select: {
-            submissions: true
-          }
-        }
-      }
+      where: { id: BigInt(id) }
     });
 
     if (!test) {
       return createErrorResponse(res, 404, 'Test not found');
     }
 
-    // Check if test is used in any courses
-    if (test.courseTests.length > 0) {
-      const courseNames = test.courseTests.map(ct => ct.course.title).join(', ');
-      return createErrorResponse(res, 400,
-        `Cannot delete test. It is currently used in the following course(s): ${courseNames}`
-      );
-    }
-
-    // Check if test has submissions
-    if (test._count.submissions > 0) {
-      return createErrorResponse(res, 400,
-        `Cannot delete test. It has ${test._count.submissions} student submission(s)`
-      );
-    }
-
-    // Safe to delete (cascade will handle nested data)
+    // Delete test (cascade will handle all related data via Prisma schema)
     await Prisma.test.delete({
       where: { id: BigInt(id) }
     });

@@ -210,7 +210,7 @@ export default function PassageEditor({ passage, index, onUpdate, onDelete, erro
               )}
               <EditorContent
                 editor={editor}
-                className="prose prose-sm max-w-none p-4 min-h-[300px] focus:outline-none cursor-text flex-1"
+                className="prose prose-sm max-w-[45ch] p-4 min-h-[300px] focus:outline-none cursor-text flex-1"
               />
             </div>
           </div>

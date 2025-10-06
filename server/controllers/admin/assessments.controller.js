@@ -425,38 +425,13 @@ export const deleteAssessment = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if assessment exists and is used
+    // Check if assessment exists
     const assessment = await Prisma.test.findUnique({
-      where: { id: BigInt(id) },
-      include: {
-        _count: {
-          select: {
-            courseTests: true,
-            submissions: true
-          }
-        }
-      }
+      where: { id: BigInt(id) }
     });
 
     if (!assessment) {
       return createErrorResponse(res, 404, 'Assessment not found');
-    }
-
-    // Prevent deletion if used in courses or has submissions
-    if (assessment._count.courseTests > 0) {
-      return createErrorResponse(
-        res,
-        400,
-        `Cannot delete assessment. It is assigned to ${assessment._count.courseTests} course(s).`
-      );
-    }
-
-    if (assessment._count.submissions > 0) {
-      return createErrorResponse(
-        res,
-        400,
-        `Cannot delete assessment. It has ${assessment._count.submissions} submission(s).`
-      );
     }
 
     // Delete the assessment (cascade will delete passages, questions, and choices)
