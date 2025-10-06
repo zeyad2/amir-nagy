@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import assessmentService from '../../services/assessment.service';
 import AssessmentTaking from '../../components/AssessmentTaking';
 import AssessmentResults from '../../components/AssessmentResults';
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 const AssessmentTakingPage = () => {
   const { courseId, type, assessmentId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [view, setView] = useState('loading'); // loading, start, taking, results
   const [hasStarted, setHasStarted] = useState(false);
 
@@ -43,13 +44,15 @@ const AssessmentTakingPage = () => {
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: (answers) => assessmentService.submitAssessment(assessmentId, type, answers),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success('Assessment submitted successfully!');
+
+      // Invalidate queries to refetch fresh data
+      await queryClient.invalidateQueries(['assessment-status', assessmentId, type]);
+      await queryClient.invalidateQueries(['assessment-submission', assessmentId, type]);
+
+      // Update view to show results
       setView('results');
-      // Refetch submission details to show results
-      setTimeout(() => {
-        window.location.reload(); // Simple refresh to load results
-      }, 500);
     },
     onError: (error) => {
       const errorMessage = error.response?.data?.error || 'Failed to submit assessment';

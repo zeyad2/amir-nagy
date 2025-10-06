@@ -9,6 +9,7 @@ const AssessmentTimer = ({ durationMinutes, onTimeUp }) => {
   const [timeRemaining, setTimeRemaining] = useState(durationMinutes * 60); // in seconds
   const [showWarning, setShowWarning] = useState(false);
   const intervalRef = useRef(null);
+  const warningTimeoutRef = useRef(null);
   const warningShownRef = useRef(false);
 
   useEffect(() => {
@@ -29,6 +30,9 @@ const AssessmentTimer = ({ durationMinutes, onTimeUp }) => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
     };
   }, [onTimeUp]);
 
@@ -39,10 +43,17 @@ const AssessmentTimer = ({ durationMinutes, onTimeUp }) => {
       warningShownRef.current = true;
 
       // Hide warning after 10 seconds
-      setTimeout(() => {
+      warningTimeoutRef.current = setTimeout(() => {
         setShowWarning(false);
       }, 10000);
     }
+
+    // Cleanup warning timeout on unmount
+    return () => {
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+    };
   }, [timeRemaining]);
 
   // Format time as MM:SS

@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
 const AssessmentResults = ({ submission, courseId }) => {
   const navigate = useNavigate();
@@ -188,7 +189,7 @@ const AssessmentResults = ({ submission, courseId }) => {
                           <div className="mt-3 pt-3 border-t">
                             <div
                               className="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif"
-                              dangerouslySetInnerHTML={{ __html: answer.passage.content }}
+                              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(answer.passage.content) }}
                             />
                             {answer.passage.imageURL && (
                               <img

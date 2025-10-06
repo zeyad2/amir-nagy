@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import AssessmentTimer from './AssessmentTimer';
 import QuestionNavigation from './QuestionNavigation';
 import toast from 'react-hot-toast';
+import DOMPurify from 'dompurify';
 
 const AssessmentTaking = ({ assessment, onSubmit, onAutoSubmit, isSubmitting }) => {
   const [currentPassageIndex, setCurrentPassageIndex] = useState(0);
@@ -193,7 +194,7 @@ const AssessmentTaking = ({ assessment, onSubmit, onAutoSubmit, isSubmitting }) 
                 <div className="prose prose-sm max-w-none">
                   <div
                     className="text-gray-800 leading-relaxed font-serif"
-                    dangerouslySetInnerHTML={{ __html: currentPassage.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentPassage.content) }}
                   />
                   {currentPassage.imageURL && (
                     <img
