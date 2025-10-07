@@ -83,13 +83,17 @@ export const getStudentDashboard = async (req, res) => {
         studentId: student.uuid
       },
       include: {
-        test: {
-          select: {
-            passages: {
+        CourseTest: {
+          include: {
+            test: {
               select: {
-                questions: {
+                passages: {
                   select: {
-                    id: true
+                    questions: {
+                      select: {
+                        id: true
+                      }
+                    }
                   }
                 }
               }
@@ -102,7 +106,7 @@ export const getStudentDashboard = async (req, res) => {
     let averageScore = 0;
     if (submissions.length > 0) {
       const totalScore = submissions.reduce((sum, sub) => {
-        const totalQuestions = sub.test.passages.reduce((count, passage) => count + passage.questions.length, 0);
+        const totalQuestions = sub.CourseTest.test.passages.reduce((count, passage) => count + passage.questions.length, 0);
         const percentage = totalQuestions > 0 ? (sub.score / totalQuestions) * 100 : 0;
         return sum + percentage;
       }, 0);
@@ -115,15 +119,19 @@ export const getStudentDashboard = async (req, res) => {
         studentId: student.uuid
       },
       include: {
-        test: {
-          select: {
-            id: true,
-            title: true,
-            passages: {
+        CourseTest: {
+          include: {
+            test: {
               select: {
-                questions: {
+                id: true,
+                title: true,
+                passages: {
                   select: {
-                    id: true
+                    questions: {
+                      select: {
+                        id: true
+                      }
+                    }
                   }
                 }
               }
@@ -169,14 +177,14 @@ export const getStudentDashboard = async (req, res) => {
     // Format recent submissions
     const recentActivity = recentSubmissions.map(submission => {
       // Calculate total questions from all passages
-      const totalQuestions = submission.test.passages.reduce((total, passage) => {
+      const totalQuestions = submission.CourseTest.test.passages.reduce((total, passage) => {
         return total + (passage.questions?.length || 0);
       }, 0);
       return {
         id: submission.id.toString(),
         test: {
-          id: submission.test.id.toString(),
-          title: submission.test.title
+          id: submission.CourseTest.test.id.toString(),
+          title: submission.CourseTest.test.title
         },
         score: submission.score,
         totalQuestions: totalQuestions,

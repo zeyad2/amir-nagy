@@ -9,16 +9,16 @@ datasource db {
 }
 
 model User {
-  uuid             BigInt              @id(map: "user_pkey") @default(autoincrement())
-  email            String              @unique(map: "user_email_key")
-  hashedPassword   String
-  role             Role
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  deletedAt        DateTime?
-  paymentsApproved Payment[]           @relation("ApprovedBy")
-  student          Student?
+  uuid                BigInt               @id(map: "user_pkey") @default(autoincrement())
+  email               String               @unique(map: "user_email_key")
+  hashedPassword      String
+  role                Role
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
   passwordResetTokens PasswordResetToken[]
+  paymentsApproved    Payment[]            @relation("ApprovedBy")
+  student             Student?
 
   @@map("User")
 }
@@ -40,7 +40,7 @@ model PasswordResetToken {
 model Student {
   uuid                BigInt               @id(map: "student_pkey")
   firstName           String
-  middleName          String 
+  middleName          String
   lastName            String
   phone               String               @db.VarChar(30)
   parentFirstName     String
@@ -161,6 +161,8 @@ model Lesson {
   id            BigInt         @id(map: "lesson_pkey") @default(autoincrement())
   title         String
   videoLink     String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   courseLessons CourseLesson[]
 
   @@map("Lesson")
@@ -269,14 +271,13 @@ model HomeworkAnswer {
 }
 
 model Test {
-  id           BigInt           @id(map: "test_pkey") @default(autoincrement())
+  id           BigInt        @id(map: "test_pkey") @default(autoincrement())
   title        String
   instructions String?
   duration     Int?
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime      @default(now())
   courseTests  CourseTest[]
   passages     TestPassage[]
-  submissions  TestSubmission[]
 
   @@map("Test")
 }
@@ -319,12 +320,13 @@ model TestQuestionChoice {
 }
 
 model CourseTest {
-  id       BigInt   @id(map: "courseTest_pkey") @default(autoincrement())
-  courseId BigInt
-  testId   BigInt
-  dueDate  DateTime @db.Date
-  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseTest_courseId_fkey")
-  test     Test     @relation(fields: [testId], references: [id], onDelete: Cascade, map: "courseTest_testId_fkey")
+  id             BigInt           @id(map: "courseTest_pkey") @default(autoincrement())
+  courseId       BigInt
+  testId         BigInt
+  dueDate        DateTime         @db.Date
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseTest_courseId_fkey")
+  test           Test             @relation(fields: [testId], references: [id], onDelete: Cascade, map: "courseTest_testId_fkey")
+  TestSubmission TestSubmission[]
 
   @@unique([courseId, testId], map: "courseTest_courseId_testId_key")
   @@index([courseId], map: "courseTest_courseId_idx")
@@ -332,16 +334,17 @@ model CourseTest {
 }
 
 model TestSubmission {
-  id          BigInt       @id(map: "testSubmission_pkey") @default(autoincrement())
-  testId      BigInt
-  studentId   BigInt
-  submittedAt DateTime     @default(now())
-  score       Int
-  answers     TestAnswer[]
-  student     Student      @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "testSubmission_studentId_fkey")
-  test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade, map: "testSubmission_testId_fkey")
+  id           BigInt       @id(map: "testSubmission_pkey") @default(autoincrement())
+  studentId    BigInt
+  submittedAt  DateTime     @default(now())
+  score        Int
+  courseTestId BigInt
+  answers      TestAnswer[]
+  CourseTest   CourseTest   @relation(fields: [courseTestId], references: [id], onDelete: Cascade, map: "testSubmission_courseTestId_fkey")
+  student      Student      @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "testSubmission_studentId_fkey")
 
-  @@unique([testId, studentId], map: "testSubmission_testId_studentId_key")
+  @@unique([courseTestId, studentId], map: "testSubmission_courseTestId_studentId_key")
+  @@index([courseTestId], map: "testSubmission_courseTestId_idx")
   @@map("TestSubmission")
 }
 
