@@ -44,7 +44,7 @@ export default function TestBuilder() {
       setLoading(true)
       // Fetch full test data including passages and questions
       const response = await adminService.getTestById(test.id)
-      const fullTestData = response.data.data?.assessment
+      const fullTestData = response.data.data
       setSelectedTest(fullTestData)
       setView('edit')
     } catch (error) {
