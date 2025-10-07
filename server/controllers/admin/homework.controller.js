@@ -36,9 +36,11 @@ export const getHomework = async (req, res) => {
           _count: {
             select: {
               passages: true,
-              courseHomeworks: true,
-              submissions: true
+              courseHomeworks: true
             }
+          },
+          submissions: {
+            select: { id: true }
           },
           courseHomeworks: {
             select: {
@@ -67,7 +69,7 @@ export const getHomework = async (req, res) => {
       createdAt: hw.createdAt,
       passageCount: hw._count.passages,
       usageCount: hw._count.courseHomeworks,
-      submissionCount: hw._count.submissions,
+      submissionCount: hw.submissions.length,
       usedInCourses: hw.courseHomeworks.map(ch => ({
         id: ch.course.id.toString(),
         title: ch.course.title,
@@ -126,10 +128,8 @@ export const getHomeworkById = async (req, res) => {
             }
           }
         },
-        _count: {
-          select: {
-            submissions: true
-          }
+        submissions: {
+          select: { id: true }
         }
       }
     });
@@ -163,7 +163,7 @@ export const getHomeworkById = async (req, res) => {
         }))
       })),
       usageCount: homework.courseHomeworks.length,
-      submissionCount: homework._count.submissions,
+      submissionCount: homework.submissions.length,
       usedInCourses: homework.courseHomeworks.map(ch => ({
         id: ch.course.id.toString(),
         title: ch.course.title,

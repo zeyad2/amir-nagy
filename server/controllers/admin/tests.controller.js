@@ -37,9 +37,11 @@ export const getTests = async (req, res) => {
           _count: {
             select: {
               passages: true,
-              courseTests: true,
-              submissions: true
+              courseTests: true
             }
+          },
+          submissions: {
+            select: { id: true }
           },
           courseTests: {
             select: {
@@ -69,7 +71,7 @@ export const getTests = async (req, res) => {
       createdAt: test.createdAt,
       passageCount: test._count.passages,
       usageCount: test._count.courseTests,
-      submissionCount: test._count.submissions,
+      submissionCount: test.submissions.length,
       usedInCourses: test.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
@@ -128,10 +130,8 @@ export const getTestById = async (req, res) => {
             }
           }
         },
-        _count: {
-          select: {
-            submissions: true
-          }
+        submissions: {
+          select: { id: true }
         }
       }
     });
@@ -166,7 +166,7 @@ export const getTestById = async (req, res) => {
         }))
       })),
       usageCount: test.courseTests.length,
-      submissionCount: test._count.submissions,
+      submissionCount: test.submissions.length,
       usedInCourses: test.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,

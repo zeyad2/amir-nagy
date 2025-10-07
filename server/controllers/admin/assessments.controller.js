@@ -54,9 +54,11 @@ export const getAssessments = async (req, res) => {
           _count: {
             select: {
               passages: true,
-              courseTests: true,
-              submissions: true
+              courseTests: true
             }
+          },
+          submissions: {
+            select: { id: true }
           },
           courseTests: {
             select: {
@@ -87,13 +89,13 @@ export const getAssessments = async (req, res) => {
       createdAt: assessment.createdAt,
       passageCount: assessment._count.passages,
       usageCount: assessment._count.courseTests,
-      submissionCount: assessment._count.submissions,
+      submissionCount: assessment.submissions.length,
       usedInCourses: assessment.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: assessment._count.courseTests === 0 && assessment._count.submissions === 0
+      canDelete: assessment._count.courseTests === 0 && assessment.submissions.length === 0
     }));
 
     return createResponse(res, 200, 'Assessments fetched successfully', {
@@ -137,9 +139,11 @@ export const getAssessmentById = async (req, res) => {
         },
         _count: {
           select: {
-            courseTests: true,
-            submissions: true
+            courseTests: true
           }
+        },
+        submissions: {
+          select: { id: true }
         },
         courseTests: {
           select: {
@@ -186,13 +190,13 @@ export const getAssessmentById = async (req, res) => {
         }))
       })),
       usageCount: assessment._count.courseTests,
-      submissionCount: assessment._count.submissions,
+      submissionCount: assessment.submissions.length,
       usedInCourses: assessment.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: assessment._count.courseTests === 0 && assessment._count.submissions === 0
+      canDelete: assessment._count.courseTests === 0 && assessment.submissions.length === 0
     };
 
     return createResponse(res, 200, 'Assessment fetched successfully', assessmentData);
