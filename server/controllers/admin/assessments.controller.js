@@ -54,8 +54,7 @@ export const getAssessments = async (req, res) => {
           _count: {
             select: {
               passages: true,
-              courseTests: true,
-              submissions: true
+              courseTests: true
             }
           },
           courseTests: {
@@ -137,8 +136,7 @@ export const getAssessmentById = async (req, res) => {
         },
         _count: {
           select: {
-            courseTests: true,
-            submissions: true
+            courseTests: true
           }
         },
         courseTests: {
@@ -309,7 +307,11 @@ export const updateAssessment = async (req, res) => {
     const existingAssessment = await Prisma.test.findUnique({
       where: { id: BigInt(id) },
       include: {
-        submissions: true
+        _count: {
+          select: {
+            courseTests: true
+          }
+        }
       }
     });
 
@@ -317,14 +319,8 @@ export const updateAssessment = async (req, res) => {
       return createErrorResponse(res, 404, 'Assessment not found');
     }
 
-    // Prevent updates if there are submissions
-    if (existingAssessment.submissions.length > 0) {
-      return createErrorResponse(
-        res,
-        400,
-        'Cannot update assessment that has submissions. Create a new version instead.'
-      );
-    }
+    // Note: Allow updates even if there are submissions
+    // In the future, you may want to version tests instead
 
     // Use transaction to ensure atomicity
     const updatedAssessment = await Prisma.$transaction(async (prisma) => {
