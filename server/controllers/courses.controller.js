@@ -198,12 +198,12 @@ export const getPublicCourseDetail = async (req, res) => {
               courseId: BigInt(courseId)
             },
             orderBy: {
-              requestedAt: 'desc'
+              createdAt: 'desc'
             },
             select: {
               id: true,
               status: true,
-              requestedAt: true
+              createdAt: true
             }
           });
         }

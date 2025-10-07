@@ -1,0 +1,164 @@
+Design a modern, student-friendly, and visually appealing mobile & web app UI/UX for Campus Eats – Revolutionising University Food Ordering. The design should feel vibrant, youthful, and easy to navigate, while maintaining professionalism for vendors and administrators. Use a fresh color palette (mix of warm and energetic colors like orange/yellow for food, balanced with cool tones like teal/blue for trust and readability, and neutral grays/whites for clean layouts). Apply modern styling: minimal clutter, rounded edges, soft shadows, smooth animations, and consistent iconography.
+
+
+Pages & Layouts
+Student Experience (Main App)
+
+
+Onboarding & Login
+
+
+Clean welcome screens with illustrations of campus life and food.
+
+
+Login via university email, phone, or ID.
+
+
+Quick, simple registration flow.
+
+
+Home / Explore Vendors
+
+
+Card/grid layout of food vendors with logos, categories, and ratings.
+
+
+Search bar at the top + filter chips (cuisine, price, dietary needs).
+
+
+Highlighted promos and loyalty offers in a banner.
+
+
+Vendor Menu Page
+
+
+Scrollable list of menu items with thumbnails, prices, and customization options.
+
+
+Sticky “cart” button at the bottom showing total and checkout access.
+
+
+Cart & Checkout
+
+
+Clean summary with item details, ability to edit/remove.
+
+
+Payment options: cash, card, Instapay, wallet.
+
+
+Option for scheduled pickup vs ASAP.
+
+
+Order Tracking
+
+
+Real-time status timeline (Preparing → Ready → Picked Up).
+
+
+Progress bar or animation showing order movement.
+
+
+Community & Marketplace
+
+
+Forum-style feed with posts, comments, and likes.
+
+
+Marketplace grid for student-to-student selling/buying.
+
+
+User profiles with avatar, reputation points, and activity badges.
+
+
+Rewards & Notifications
+
+
+Loyalty page with points, promo codes, and referral tracker.
+
+
+Notification center with order updates, event alerts, and offers.
+
+
+Vendor Portal (Mobile/Web)
+
+
+Order Dashboard
+
+
+Live order queue with status cards.
+
+
+Easy tap-to-update order stage (new, preparing, ready).
+
+
+Menu Management
+
+
+Editable list of items with price, availability toggle, and specials.
+
+
+Analytics Dashboard
+
+
+Charts for sales trends, popular items, peak hours.
+
+
+Daily/weekly revenue snapshots.
+
+
+Admin Panel (Web)
+
+
+Vendor & User Management
+
+
+Tables with search/filter for vendors and users.
+
+
+Verification and moderation tools.
+
+
+Order Logs & Disputes
+
+
+Timeline/history view of orders with flags for issues.
+
+
+Promotions & Finance
+
+
+Create promo campaigns.
+
+
+Manage commission rates and payouts.
+
+
+High-level analytics dashboard.
+
+
+Visual Style
+
+
+Typography: Clean sans-serif (e.g., Inter, Poppins, or similar).
+
+
+Colors:
+
+
+Primary: energetic orange or coral.
+
+
+Secondary: teal/blue for trust and calm.
+
+
+Accents: soft green (success), red (errors), and gold (rewards).
+
+
+Backgrounds: light neutral or dark mode toggle for students.
+
+
+UI Elements: Rounded buttons, cards with subtle shadows, iconography for food categories, smooth transitions.
+
+
+Overall Feel: Youthful, social, dynamic, yet efficient and trustworthy.
