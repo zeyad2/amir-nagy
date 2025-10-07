@@ -37,8 +37,7 @@ export const getTests = async (req, res) => {
           _count: {
             select: {
               passages: true,
-              courseTests: true,
-              submissions: true
+              courseTests: true
             }
           },
           courseTests: {
@@ -69,13 +68,13 @@ export const getTests = async (req, res) => {
       createdAt: test.createdAt,
       passageCount: test._count.passages,
       usageCount: test._count.courseTests,
-      submissionCount: test._count.submissions,
+      submissionCount: 0, // TODO: Implement submission counting when needed
       usedInCourses: test.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: test._count.courseTests === 0 && test._count.submissions === 0
+      canDelete: test._count.courseTests === 0
     }));
 
     return createResponse(res, 200, 'Tests fetched successfully', {
@@ -130,7 +129,7 @@ export const getTestById = async (req, res) => {
         },
         _count: {
           select: {
-            submissions: true
+            courseTests: true
           }
         }
       }
@@ -166,13 +165,13 @@ export const getTestById = async (req, res) => {
         }))
       })),
       usageCount: test.courseTests.length,
-      submissionCount: test._count.submissions,
+      submissionCount: 0, // TODO: Implement submission counting when needed
       usedInCourses: test.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: test.courseTests.length === 0 && test._count.submissions === 0
+      canDelete: test.courseTests.length === 0
     };
 
     return createResponse(res, 200, 'Test fetched successfully', { test: testData });
@@ -386,11 +385,6 @@ export const deleteTest = async (req, res) => {
               select: { id: true, title: true }
             }
           }
-        },
-        _count: {
-          select: {
-            submissions: true
-          }
         }
       }
     });
@@ -404,13 +398,6 @@ export const deleteTest = async (req, res) => {
       const courseNames = test.courseTests.map(ct => ct.course.title).join(', ');
       return createErrorResponse(res, 400,
         `Cannot delete test. It is currently used in the following course(s): ${courseNames}`
-      );
-    }
-
-    // Check if test has submissions
-    if (test._count.submissions > 0) {
-      return createErrorResponse(res, 400,
-        `Cannot delete test. It has ${test._count.submissions} student submission(s)`
       );
     }
 

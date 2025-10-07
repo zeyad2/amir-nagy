@@ -86,13 +86,13 @@ export const getAssessments = async (req, res) => {
       createdAt: assessment.createdAt,
       passageCount: assessment._count.passages,
       usageCount: assessment._count.courseTests,
-      submissionCount: assessment._count.submissions,
+      submissionCount: 0, // TODO: Implement when submissions feature is added
       usedInCourses: assessment.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: assessment._count.courseTests === 0 && assessment._count.submissions === 0
+      canDelete: assessment._count.courseTests === 0
     }));
 
     return createResponse(res, 200, 'Assessments fetched successfully', {
@@ -184,13 +184,13 @@ export const getAssessmentById = async (req, res) => {
         }))
       })),
       usageCount: assessment._count.courseTests,
-      submissionCount: assessment._count.submissions,
+      submissionCount: 0, // TODO: Implement when submissions feature is added
       usedInCourses: assessment.courseTests.map(ct => ({
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
       })),
-      canDelete: assessment._count.courseTests === 0 && assessment._count.submissions === 0
+      canDelete: assessment._count.courseTests === 0
     };
 
     return createResponse(res, 200, 'Assessment fetched successfully', assessmentData);
@@ -427,8 +427,7 @@ export const deleteAssessment = async (req, res) => {
       include: {
         _count: {
           select: {
-            courseTests: true,
-            submissions: true
+            courseTests: true
           }
         }
       }
@@ -438,20 +437,12 @@ export const deleteAssessment = async (req, res) => {
       return createErrorResponse(res, 404, 'Assessment not found');
     }
 
-    // Prevent deletion if used in courses or has submissions
+    // Prevent deletion if used in courses
     if (assessment._count.courseTests > 0) {
       return createErrorResponse(
         res,
         400,
         `Cannot delete assessment. It is assigned to ${assessment._count.courseTests} course(s).`
-      );
-    }
-
-    if (assessment._count.submissions > 0) {
-      return createErrorResponse(
-        res,
-        400,
-        `Cannot delete assessment. It has ${assessment._count.submissions} submission(s).`
       );
     }
 
