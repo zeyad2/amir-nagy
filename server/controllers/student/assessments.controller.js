@@ -44,37 +44,6 @@ export const startAssessmentAttempt = async (req, res) => {
       );
     }
 
-    // Verify that the student is enrolled in a course that contains this assessment
-    const courseWithAssessment = await Prisma.courseTest.findFirst({
-      where: {
-        testId: BigInt(assessmentId),
-        course: {
-          enrollments: {
-            some: {
-              studentId: student.uuid,
-              status: 'active'
-            }
-          }
-        }
-      },
-      include: {
-        course: {
-          select: {
-            id: true,
-            title: true
-          }
-        }
-      }
-    });
-
-    if (!courseWithAssessment) {
-      return createErrorResponse(
-        res,
-        403,
-        'You are not enrolled in a course that contains this assessment'
-      );
-    }
-
     // Get the assessment with all questions (but don't include correct answers)
     const assessment = await Prisma.test.findUnique({
       where: { id: BigInt(assessmentId) },
@@ -230,22 +199,6 @@ export const submitAssessment = async (req, res) => {
       return createErrorResponse(res, 400, 'Answers array is required and must not be empty');
     }
 
-    // Validate answer format
-    const invalidAnswers = answers.filter(answer =>
-      !answer ||
-      typeof answer !== 'object' ||
-      !answer.questionId ||
-      (answer.choiceId !== null && !answer.choiceId)
-    );
-
-    if (invalidAnswers.length > 0) {
-      return createErrorResponse(
-        res,
-        400,
-        'Invalid answer format. Each answer must have questionId and choiceId (or null)'
-      );
-    }
-
     // Get student record
     const student = await Prisma.student.findUnique({
       where: { uuid: userId }
@@ -255,119 +208,81 @@ export const submitAssessment = async (req, res) => {
       return createErrorResponse(res, 404, 'Student record not found');
     }
 
-    // Verify enrollment, check for existing submission, and create new submission in a transaction
-    // This prevents race conditions where two simultaneous requests could both pass the check
-    let submission;
-    try {
-      submission = await Prisma.$transaction(async (prisma) => {
-        // Check if already submitted (within transaction)
-        const existingSubmission = await prisma.testSubmission.findUnique({
-          where: {
-            testId_studentId: {
-              testId: BigInt(assessmentId),
-              studentId: student.uuid
-            }
-          }
-        });
-
-        if (existingSubmission) {
-          throw new Error('ALREADY_SUBMITTED');
+    // Check if already submitted
+    const existingSubmission = await Prisma.testSubmission.findUnique({
+      where: {
+        testId_studentId: {
+          testId: BigInt(assessmentId),
+          studentId: student.uuid
         }
-
-        // Verify that the student is enrolled in a course that contains this assessment
-        const courseWithAssessment = await prisma.courseTest.findFirst({
-          where: {
-            testId: BigInt(assessmentId),
-            course: {
-              enrollments: {
-                some: {
-                  studentId: student.uuid,
-                  status: 'active'
-                }
-              }
-            }
-          }
-        });
-
-        if (!courseWithAssessment) {
-          throw new Error('NOT_ENROLLED');
-        }
-
-        // Get assessment with all questions and correct answers
-        const assessment = await prisma.test.findUnique({
-          where: { id: BigInt(assessmentId) },
-          include: {
-            passages: {
-              include: {
-                questions: {
-                  include: {
-                    choices: true
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        if (!assessment) {
-          throw new Error('ASSESSMENT_NOT_FOUND');
-        }
-
-        // Calculate score and prepare answer records
-        const { score, totalQuestions, answerRecords } = calculateAssessmentScore(
-          assessment,
-          answers
-        );
-
-        // Create the submission
-        const newSubmission = await prisma.testSubmission.create({
-          data: {
-            testId: BigInt(assessmentId),
-            studentId: student.uuid,
-            score
-          }
-        });
-
-        // Create all answer records
-        await prisma.testAnswer.createMany({
-          data: answerRecords.map(answer => ({
-            submissionId: newSubmission.id,
-            questionId: BigInt(answer.questionId),
-            choiceId: answer.choiceId ? BigInt(answer.choiceId) : null,
-            isCorrect: answer.isCorrect
-          }))
-        });
-
-        return { submission: newSubmission, score, totalQuestions };
-      });
-    } catch (error) {
-      if (error.message === 'ALREADY_SUBMITTED') {
-        return createErrorResponse(
-          res,
-          400,
-          'Assessment already submitted. Each assessment can only be attempted once.'
-        );
       }
-      if (error.message === 'NOT_ENROLLED') {
-        return createErrorResponse(
-          res,
-          403,
-          'You are not enrolled in a course that contains this assessment'
-        );
-      }
-      if (error.message === 'ASSESSMENT_NOT_FOUND') {
-        return createErrorResponse(res, 404, 'Assessment not found');
-      }
-      throw error; // Re-throw unexpected errors
+    });
+
+    if (existingSubmission) {
+      return createErrorResponse(
+        res,
+        400,
+        'Assessment already submitted. Each assessment can only be attempted once.'
+      );
     }
 
+    // Get assessment with all questions and correct answers
+    const assessment = await Prisma.test.findUnique({
+      where: { id: BigInt(assessmentId) },
+      include: {
+        passages: {
+          include: {
+            questions: {
+              include: {
+                choices: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!assessment) {
+      return createErrorResponse(res, 404, 'Assessment not found');
+    }
+
+    // Calculate score and prepare answer records
+    const { score, totalQuestions, answerRecords } = calculateAssessmentScore(
+      assessment,
+      answers
+    );
+
+    // Create submission with answers in a transaction
+    const submission = await Prisma.$transaction(async (prisma) => {
+      // Create the submission
+      const newSubmission = await prisma.testSubmission.create({
+        data: {
+          testId: BigInt(assessmentId),
+          studentId: student.uuid,
+          score
+        }
+      });
+
+      // Create all answer records
+      await prisma.testAnswer.createMany({
+        data: answerRecords.map(answer => ({
+          submissionId: newSubmission.id,
+          questionId: BigInt(answer.questionId),
+          choiceId: answer.choiceId ? BigInt(answer.choiceId) : null,
+          isCorrect: answer.isCorrect
+        }))
+      });
+
+      return newSubmission;
+    });
+
     return createResponse(res, 201, 'Assessment submitted successfully', {
-      submissionId: submission.submission.id.toString(),
-      score: submission.score,
-      totalQuestions: submission.totalQuestions,
-      percentage: ((submission.score / submission.totalQuestions) * 100).toFixed(2),
-      submittedAt: submission.submission.submittedAt,
-      message: `You scored ${submission.score} out of ${submission.totalQuestions} (${((submission.score / submission.totalQuestions) * 100).toFixed(2)}%)`
+      submissionId: submission.id.toString(),
+      score,
+      totalQuestions,
+      percentage: ((score / totalQuestions) * 100).toFixed(2),
+      submittedAt: submission.submittedAt,
+      message: `You scored ${score} out of ${totalQuestions} (${((score / totalQuestions) * 100).toFixed(2)}%)`
     });
   } catch (error) {
     console.error('Error submitting assessment:', error);
@@ -393,29 +308,6 @@ export const getAssessmentSubmission = async (req, res) => {
       return createErrorResponse(res, 404, 'Student record not found');
     }
 
-    // Verify that the student is enrolled in a course that contains this assessment
-    const courseWithAssessment = await Prisma.courseTest.findFirst({
-      where: {
-        testId: BigInt(assessmentId),
-        course: {
-          enrollments: {
-            some: {
-              studentId: student.uuid,
-              status: 'active'
-            }
-          }
-        }
-      }
-    });
-
-    if (!courseWithAssessment) {
-      return createErrorResponse(
-        res,
-        403,
-        'You are not enrolled in a course that contains this assessment'
-      );
-    }
-
     // Get submission with answers
     const submission = await Prisma.testSubmission.findUnique({
       where: {
@@ -436,16 +328,7 @@ export const getAssessmentSubmission = async (req, res) => {
           include: {
             question: {
               include: {
-                choices: true,
-                passage: {
-                  select: {
-                    id: true,
-                    title: true,
-                    content: true,
-                    imageURL: true,
-                    order: true
-                  }
-                }
+                choices: true
               }
             },
             choice: true
@@ -473,13 +356,6 @@ export const getAssessmentSubmission = async (req, res) => {
         selectedChoiceId: answer.choiceId?.toString() || null,
         selectedChoiceText: answer.choice?.choiceText || 'Not answered',
         isCorrect: answer.isCorrect,
-        passage: answer.question.passage ? {
-          id: answer.question.passage.id.toString(),
-          title: answer.question.passage.title,
-          content: answer.question.passage.content,
-          imageURL: answer.question.passage.imageURL,
-          order: answer.question.passage.order
-        } : null,
         allChoices: answer.question.choices.map(choice => ({
           id: choice.id.toString(),
           text: choice.choiceText,

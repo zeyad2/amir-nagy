@@ -73,7 +73,7 @@ export const getHomework = async (req, res) => {
         title: ch.course.title,
         status: ch.course.status
       })),
-      canDelete: true // Cascade deletes handle all related records
+      canDelete: hw._count.courseHomeworks === 0 && hw._count.submissions === 0
     }));
 
     return createResponse(res, 200, 'Homework fetched successfully', {
@@ -169,7 +169,7 @@ export const getHomeworkById = async (req, res) => {
         title: ch.course.title,
         status: ch.course.status
       })),
-      canDelete: true // Cascade deletes handle all related records
+      canDelete: homework.courseHomeworks.length === 0 && homework._count.submissions === 0
     };
 
     return createResponse(res, 200, 'Homework fetched successfully', { homework: homeworkData });
@@ -362,25 +362,52 @@ export const updateHomework = async (req, res) => {
 };
 
 /**
- * Delete homework (cascade deletes all related data)
+ * Delete homework (with usage and submission check)
  * DELETE /api/admin/homework/:id
- * Note: Cascade deletes will remove all related passages, questions, choices,
- * course associations (CourseHomework), and student submissions
  */
 export const deleteHomework = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if homework exists
+    // Check if homework exists and get usage information
     const homework = await Prisma.homework.findUnique({
-      where: { id: BigInt(id) }
+      where: { id: BigInt(id) },
+      include: {
+        courseHomeworks: {
+          include: {
+            course: {
+              select: { id: true, title: true }
+            }
+          }
+        },
+        _count: {
+          select: {
+            submissions: true
+          }
+        }
+      }
     });
 
     if (!homework) {
       return createErrorResponse(res, 404, 'Homework not found');
     }
 
-    // Delete homework (cascade will handle all related data via Prisma schema)
+    // Check if homework is used in any courses
+    if (homework.courseHomeworks.length > 0) {
+      const courseNames = homework.courseHomeworks.map(ch => ch.course.title).join(', ');
+      return createErrorResponse(res, 400,
+        `Cannot delete homework. It is currently used in the following course(s): ${courseNames}`
+      );
+    }
+
+    // Check if homework has submissions
+    if (homework._count.submissions > 0) {
+      return createErrorResponse(res, 400,
+        `Cannot delete homework. It has ${homework._count.submissions} student submission(s)`
+      );
+    }
+
+    // Safe to delete (cascade will handle nested data)
     await Prisma.homework.delete({
       where: { id: BigInt(id) }
     });
