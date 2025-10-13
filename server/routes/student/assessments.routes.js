@@ -4,6 +4,7 @@
  */
 import { Router } from "express";
 import {
+  getAssessmentData,
   startAssessmentAttempt,
   getAssessmentAttemptStatus,
   submitAssessment,
@@ -16,6 +17,12 @@ import {
 } from "../../schemas/student.schemas.js";
 
 const assessmentsRouter = Router();
+
+// GET /api/student/assessments/:id - Get assessment data (for viewing/resuming)
+assessmentsRouter.get('/:id',
+  validateParams(assessmentIdParamSchema),
+  getAssessmentData
+);
 
 // POST /api/student/assessments/:id/attempt - Start an assessment attempt
 assessmentsRouter.post('/:id/attempt',

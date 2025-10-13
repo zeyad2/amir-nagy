@@ -72,8 +72,7 @@ export const getHomework = async (req, res) => {
         id: ch.course.id.toString(),
         title: ch.course.title,
         status: ch.course.status
-      })),
-      canDelete: hw._count.courseHomeworks === 0 && hw._count.submissions === 0
+      }))
     }));
 
     return createResponse(res, 200, 'Homework fetched successfully', {
@@ -168,8 +167,7 @@ export const getHomeworkById = async (req, res) => {
         id: ch.course.id.toString(),
         title: ch.course.title,
         status: ch.course.status
-      })),
-      canDelete: homework.courseHomeworks.length === 0 && homework._count.submissions === 0
+      }))
     };
 
     return createResponse(res, 200, 'Homework fetched successfully', { homework: homeworkData });
@@ -392,22 +390,7 @@ export const deleteHomework = async (req, res) => {
       return createErrorResponse(res, 404, 'Homework not found');
     }
 
-    // Check if homework is used in any courses
-    if (homework.courseHomeworks.length > 0) {
-      const courseNames = homework.courseHomeworks.map(ch => ch.course.title).join(', ');
-      return createErrorResponse(res, 400,
-        `Cannot delete homework. It is currently used in the following course(s): ${courseNames}`
-      );
-    }
-
-    // Check if homework has submissions
-    if (homework._count.submissions > 0) {
-      return createErrorResponse(res, 400,
-        `Cannot delete homework. It has ${homework._count.submissions} student submission(s)`
-      );
-    }
-
-    // Safe to delete (cascade will handle nested data)
+    // Delete homework (cascade will handle course assignments, submissions, and nested data)
     await Prisma.homework.delete({
       where: { id: BigInt(id) }
     });

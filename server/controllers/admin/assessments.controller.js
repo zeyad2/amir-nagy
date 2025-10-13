@@ -91,8 +91,7 @@ export const getAssessments = async (req, res) => {
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
-      })),
-      canDelete: assessment._count.courseTests === 0
+      }))
     }));
 
     return createResponse(res, 200, 'Assessments fetched successfully', {
@@ -189,8 +188,7 @@ export const getAssessmentById = async (req, res) => {
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
-      })),
-      canDelete: assessment._count.courseTests === 0
+      }))
     };
 
     return createResponse(res, 200, 'Assessment fetched successfully', assessmentData);
@@ -437,16 +435,7 @@ export const deleteAssessment = async (req, res) => {
       return createErrorResponse(res, 404, 'Assessment not found');
     }
 
-    // Prevent deletion if used in courses
-    if (assessment._count.courseTests > 0) {
-      return createErrorResponse(
-        res,
-        400,
-        `Cannot delete assessment. It is assigned to ${assessment._count.courseTests} course(s).`
-      );
-    }
-
-    // Delete the assessment (cascade will delete passages, questions, and choices)
+    // Delete the assessment (cascade will delete course assignments, submissions, passages, questions, and choices)
     await Prisma.test.delete({
       where: { id: BigInt(id) }
     });

@@ -92,8 +92,7 @@ export const submitAssessmentSchema = Joi.object({
         'string.pattern.base': 'Choice ID must be a valid number'
       })
     })
-  ).min(1).required().messages({
-    'array.min': 'At least one answer is required',
+  ).required().messages({
     'any.required': 'Answers array is required'
   })
 });
