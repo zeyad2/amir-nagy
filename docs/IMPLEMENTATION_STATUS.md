@@ -460,32 +460,65 @@
 
 ---
 
-## 📋 PHASE 14: Sessions & Attendance System (NOT STARTED)
+## ✅ PHASE 14: Sessions & Attendance System (60% COMPLETE)
 
-### Phase 14A: Basic Session Management
-- 📋 Create session endpoint (`POST /api/admin/courses/:courseId/sessions`)
-- 📋 List sessions endpoint (`GET /api/admin/courses/:courseId/sessions`)
-- 📋 Session form component
-- 📋 Sessions list UI
+### Phase 14A: Basic Session Management ✅ COMPLETE
+- ✅ Create session endpoint (`POST /api/admin/courses/:courseId/sessions`)
+- ✅ List sessions endpoint (`GET /api/admin/courses/:courseId/sessions`)
+- ✅ Session form component (SessionForm.jsx)
+- ✅ Sessions list UI (SessionManager.jsx)
 
-### Phase 14B: Session CRUD Operations
-- 📋 Update session endpoint (`PUT /api/admin/sessions/:id`)
-- 📋 Delete session endpoint (`DELETE /api/admin/sessions/:id`)
-- 📋 Get session details endpoint (`GET /api/admin/sessions/:id`)
-- 📋 Edit and delete UI
+### Phase 14B: Session CRUD Operations ✅ COMPLETE
+- ✅ Update session endpoint (`PUT /api/admin/sessions/:id`)
+- ✅ Delete session endpoint (`DELETE /api/admin/sessions/:id`)
+- ✅ Get session details endpoint (`GET /api/admin/sessions/:id`)
+- ✅ Edit button with form pre-fill
+- ✅ Delete button with confirmation dialog
+- ✅ Validation schemas (session.schemas.js)
 
-### Phase 14C: Attendance Marking
-- 📋 Bulk attendance marking endpoint (`POST /api/admin/sessions/:id/attendance`)
-- 📋 Attendance marking UI
-- 📋 Enrollment selection
-- 📋 Bulk operations
+### Phase 14C: Attendance Marking ✅ COMPLETE
+- ✅ Bulk attendance marking endpoint (`POST /api/admin/sessions/:sessionId/attendance`)
+- ✅ Get session attendance endpoint (`GET /api/admin/sessions/:sessionId/attendance`)
+- ✅ Get course attendance endpoint (`GET /api/admin/courses/:courseId/attendance`)
+- ✅ SessionAttendancePage with full session details
+- ✅ AttendanceMarker component with search functionality
+- ✅ Present/Absent toggles for all students
+- ✅ Quick actions: "Mark All Present" and "Mark All Absent"
+- ✅ Real-time attendance statistics
+- ✅ Bulk save operation with transaction
+- ✅ Validation schemas (attendance.schemas.js)
+- ✅ Route integration (`/admin/sessions/:sessionId/attendance`)
+- ✅ Navigation from SessionManager to attendance page
 
-### Phase 14D: Student Attendance View
+**Implemented Files:**
+- Backend:
+  - `server/controllers/admin/sessions.controller.js` (complete CRUD)
+  - `server/controllers/admin/attendance.controller.js` (bulk marking)
+  - `server/routes/admin/sessions.routes.js` (all routes)
+  - `server/routes/admin/attendance.routes.js` (attendance routes)
+  - `server/schemas/session.schemas.js` (validation)
+  - `server/schemas/attendance.schemas.js` (validation)
+- Frontend:
+  - `client/src/components/admin/SessionManager.jsx` (with "Mark Attendance" button)
+  - `client/src/components/admin/SessionForm.jsx` (create/edit mode)
+  - `client/src/components/admin/AttendanceMarker.jsx` (with search)
+  - `client/src/pages/admin/SessionAttendancePage.jsx` (full page)
+  - `client/src/services/session.service.js` (CRUD methods)
+  - `client/src/services/attendance.service.js` (attendance methods)
+
+**Key Features:**
+- ✅ Sessions allow past, present, and future dates
+- ✅ Sessions can be deleted even with attendance records (cascade delete with warning)
+- ✅ Search students by name or phone for attendance marking
+- ✅ Mobile responsive design
+- ✅ Real-time statistics (present/absent/not marked counts)
+
+### Phase 14D: Student Attendance View (NOT STARTED)
 - 📋 Get student attendance endpoint (`GET /api/student/attendance`)
 - 📋 Attendance history UI
 - 📋 Attendance percentage display
 
-### Phase 14E: Attendance Reports
+### Phase 14E: Attendance Reports (NOT STARTED)
 - 📋 Get attendance reports endpoint (`GET /api/admin/courses/:courseId/attendance/report`)
 - 📋 Export attendance data
 - 📋 Attendance analytics

@@ -20,7 +20,7 @@ const routeConfig = {
     label: 'Courses',
     parent: '/admin'
   },
-  '/admin/courses/new': {
+  '/admin/courses/create': {
     label: 'New Course',
     parent: '/admin/courses'
   },
