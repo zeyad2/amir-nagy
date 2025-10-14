@@ -72,4 +72,5 @@ playwright.config.js
 PROJECT_DOCUMENTATION.md
 TESTING_GUIDE.md
 SAT_Platform_API.postman_collection.json
+server/scripts/
 

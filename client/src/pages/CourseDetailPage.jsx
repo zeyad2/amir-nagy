@@ -222,7 +222,10 @@ const CourseDetailPage = () => {
                     <ul className="space-y-1">
                       {course.courseHomeworks.map((courseHomework, index) => (
                         <li key={courseHomework.id}>
-                          <button className="w-full flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                          <button
+                            onClick={() => navigate(`/student/assessment/${courseHomework.homework.id}`)}
+                            className="w-full flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                          >
                             <span className="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
                               {index + 1}
                             </span>
@@ -249,7 +252,10 @@ const CourseDetailPage = () => {
                     <ul className="space-y-1">
                       {course.courseTests.map((courseTest, index) => (
                         <li key={courseTest.id}>
-                          <button className="w-full flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                          <button
+                            onClick={() => navigate(`/student/assessment/${courseTest.test.id}`)}
+                            className="w-full flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                          >
                             <span className="w-7 h-7 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium mr-3">
                               {index + 1}
                             </span>

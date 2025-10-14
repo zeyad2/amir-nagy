@@ -101,7 +101,7 @@ export function AppRouter() {
           }
         />
         <Route
-          path="student/assessment/:type/:id"
+          path="student/assessment/:id"
           element={
             <ProtectedRoute allowedRoles={['student']}>
               <AssessmentPage />

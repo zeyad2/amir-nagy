@@ -51,6 +51,7 @@ model Student {
   enrollments         Enrollment[]
   enrollmentRequests  EnrollmentRequest[]
   homeworkSubmissions HomeworkSubmission[]
+  testAttempts        TestAttempt[]
   user                User                 @relation(fields: [uuid], references: [uuid], onDelete: Cascade, map: "student_uuid_fkey")
   testSubmissions     TestSubmission[]
 
@@ -326,11 +327,25 @@ model CourseTest {
   dueDate        DateTime         @db.Date
   course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseTest_courseId_fkey")
   test           Test             @relation(fields: [testId], references: [id], onDelete: Cascade, map: "courseTest_testId_fkey")
+  testAttempts   TestAttempt[]
   TestSubmission TestSubmission[]
 
   @@unique([courseId, testId], map: "courseTest_courseId_testId_key")
   @@index([courseId], map: "courseTest_courseId_idx")
   @@map("CourseTest")
+}
+
+model TestAttempt {
+  id           BigInt     @id(map: "testAttempt_pkey") @default(autoincrement())
+  courseTestId BigInt
+  studentId    BigInt
+  startedAt    DateTime   @default(now())
+  CourseTest   CourseTest @relation(fields: [courseTestId], references: [id], onDelete: Cascade, map: "testAttempt_courseTestId_fkey")
+  student      Student    @relation(fields: [studentId], references: [uuid], onDelete: Cascade, map: "testAttempt_studentId_fkey")
+
+  @@unique([courseTestId, studentId], map: "testAttempt_courseTestId_studentId_key")
+  @@index([courseTestId], map: "testAttempt_courseTestId_idx")
+  @@map("TestAttempt")
 }
 
 model TestSubmission {

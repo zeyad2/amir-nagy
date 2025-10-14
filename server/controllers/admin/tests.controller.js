@@ -73,8 +73,7 @@ export const getTests = async (req, res) => {
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
-      })),
-      canDelete: test._count.courseTests === 0
+      }))
     }));
 
     return createResponse(res, 200, 'Tests fetched successfully', {
@@ -170,8 +169,7 @@ export const getTestById = async (req, res) => {
         id: ct.course.id.toString(),
         title: ct.course.title,
         status: ct.course.status
-      })),
-      canDelete: test.courseTests.length === 0
+      }))
     };
 
     return createResponse(res, 200, 'Test fetched successfully', { test: testData });
@@ -393,15 +391,7 @@ export const deleteTest = async (req, res) => {
       return createErrorResponse(res, 404, 'Test not found');
     }
 
-    // Check if test is used in any courses
-    if (test.courseTests.length > 0) {
-      const courseNames = test.courseTests.map(ct => ct.course.title).join(', ');
-      return createErrorResponse(res, 400,
-        `Cannot delete test. It is currently used in the following course(s): ${courseNames}`
-      );
-    }
-
-    // Safe to delete (cascade will handle nested data)
+    // Delete test (cascade will handle course assignments, submissions, and nested data)
     await Prisma.test.delete({
       where: { id: BigInt(id) }
     });

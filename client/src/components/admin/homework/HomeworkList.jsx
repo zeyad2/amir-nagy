@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { Plus, Search, Edit, Trash2, FileText, Calendar, AlertCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, FileText, Calendar } from 'lucide-react'
 import { formatDate } from '@/utils/helpers'
 import {
   AlertDialog,
@@ -138,8 +138,7 @@ export default function HomeworkList({ homework, loading, onCreateNew, onEdit, o
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeleteClick(hw)}
-                              disabled={!hw.canDelete}
-                              className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                              className="text-red-600 hover:text-red-800"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -152,16 +151,6 @@ export default function HomeworkList({ homework, loading, onCreateNew, onEdit, o
               </Table>
             )}
           </div>
-
-          {/* Info message about deletion restrictions */}
-          {filteredHomework.some(hw => !hw.canDelete) && (
-            <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <p className="text-amber-800">
-                Homework that are assigned to courses or have student submissions cannot be deleted.
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
