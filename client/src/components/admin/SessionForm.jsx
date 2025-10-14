@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -6,9 +6,29 @@ import { Label } from "@/components/ui/label"
 import { toast } from "react-hot-toast"
 import { Calendar } from 'lucide-react'
 
-export default function SessionForm({ open, onOpenChange, onSubmit, loading }) {
+export default function SessionForm({ open, onOpenChange, onSubmit, loading, initialData = null, isEditing = false }) {
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
+
+  // Populate form when editing
+  useEffect(() => {
+    if (initialData && open) {
+      setTitle(initialData.title || '')
+
+      // Convert ISO date to datetime-local format
+      if (initialData.date) {
+        const sessionDate = new Date(initialData.date)
+        // Format to YYYY-MM-DDTHH:mm for datetime-local input
+        const localDate = new Date(sessionDate.getTime() - sessionDate.getTimezoneOffset() * 60000)
+        const formattedDate = localDate.toISOString().slice(0, 16)
+        setDate(formattedDate)
+      }
+    } else if (!open) {
+      // Reset form when dialog closes
+      setTitle('')
+      setDate('')
+    }
+  }, [initialData, open])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -37,10 +57,13 @@ export default function SessionForm({ open, onOpenChange, onSubmit, loading }) {
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
-            <span>Add Session</span>
+            <span>{isEditing ? 'Edit Session' : 'Add Session'}</span>
           </DialogTitle>
           <DialogDescription>
-            Create a new session for this live course to track attendance and schedule.
+            {isEditing
+              ? 'Update the session details below.'
+              : 'Create a new session for this live course to track attendance and schedule.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -95,7 +118,10 @@ export default function SessionForm({ open, onOpenChange, onSubmit, loading }) {
               type="submit"
               disabled={loading || !date}
             >
-              {loading ? 'Creating...' : 'Create Session'}
+              {loading
+                ? (isEditing ? 'Updating...' : 'Creating...')
+                : (isEditing ? 'Update Session' : 'Create Session')
+              }
             </Button>
           </DialogFooter>
         </form>

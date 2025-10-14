@@ -86,7 +86,7 @@ export default function AdminDashboard() {
       title: 'View Requests',
       description: 'Manage enrollments',
       icon: UserCheck,
-      href: '/admin/enrollment-requests',
+      href: '/admin/students',
       color: 'bg-green-600 hover:bg-green-700'
     },
     {

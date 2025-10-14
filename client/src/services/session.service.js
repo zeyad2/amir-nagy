@@ -31,5 +31,43 @@ export const sessionService = {
       { params }
     );
     return response.data;
+  },
+
+  /**
+   * Get a single session by ID
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} - Session details
+   */
+  async getSessionById(sessionId) {
+    const response = await api.get(
+      `/admin/sessions/${sessionId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Update a session
+   * @param {string} sessionId - Session ID
+   * @param {Object} data - Updated session data (title, date)
+   * @returns {Promise<Object>} - Updated session
+   */
+  async updateSession(sessionId, data) {
+    const response = await api.put(
+      `/admin/sessions/${sessionId}`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete a session
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} - Deletion result
+   */
+  async deleteSession(sessionId) {
+    const response = await api.delete(
+      `/admin/sessions/${sessionId}`
+    );
+    return response.data;
   }
 };

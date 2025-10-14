@@ -14,21 +14,21 @@ import {
 const quickActionItems = [
   {
     label: 'New Course',
-    href: '/admin/courses/new',
+    href: '/admin/courses/create',
     icon: Plus,
     description: 'Create a new course',
     color: 'text-green-600'
   },
   {
     label: 'Add Lesson',
-    href: '/admin/resources/lessons/new',
+    href: '/admin/resources',
     icon: FileText,
     description: 'Create new lesson content',
     color: 'text-blue-600'
   },
   {
     label: 'Enrollment Requests',
-    href: '/admin/students/enrollment-requests',
+    href: '/admin/students',
     icon: Users,
     description: 'Review pending requests',
     color: 'text-orange-600',

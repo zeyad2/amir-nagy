@@ -28,6 +28,7 @@ import CreateCourse from '@/pages/admin/CreateCourse'
 import AdminStudents from '@/pages/admin/AdminStudents'
 import AdminResources from '@/pages/admin/AdminResources'
 import AdminReports from '@/pages/admin/AdminReports'
+import SessionAttendancePage from '@/pages/admin/SessionAttendancePage'
 
 // Error Pages
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -138,6 +139,7 @@ export function AppRouter() {
         <Route path="students" element={<AdminStudents />} />
         <Route path="resources" element={<AdminResources />} />
         <Route path="reports" element={<AdminReports />} />
+        <Route path="sessions/:sessionId/attendance" element={<SessionAttendancePage />} />
       </Route>
     </Routes>
   )
