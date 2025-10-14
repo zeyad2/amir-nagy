@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import AccessWindowManager from '@/components/admin/AccessWindowManager'
 import CourseAnalytics from '@/components/admin/CourseAnalytics'
+import SessionManager from '@/components/admin/SessionManager'
 import {
   ArrowLeft,
   Edit3,
@@ -760,7 +761,7 @@ export default function CourseDetailsPage() {
           </div>
 
           {/* Content Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-4 gap-6">
             {/* Lessons */}
             <Card className="group hover:shadow-lg transition-shadow duration-200">
               <CardHeader className="pb-3">
@@ -1038,6 +1039,11 @@ export default function CourseDetailsPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Sessions - Only for Live Courses */}
+            {course.type === 'live' && (
+              <SessionManager courseId={id} courseType={course.type} />
+            )}
           </div>
 
           {/* Quick Actions Bar */}

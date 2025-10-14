@@ -64,6 +64,16 @@ temp/
 /blob-report/
 /playwright/.cache/
 
+
+tests/
+test-results/
+test-screenshots/
+
+
+
+docs/
+playwright-report/
+.playwright-mcp/
 .claude/
 .serena/
 claude.md
