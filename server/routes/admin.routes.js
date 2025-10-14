@@ -17,6 +17,7 @@ import enrollmentRequestsRouter from "./admin/enrollment-requests.routes.js";
 import enrollmentsRouter from "./admin/enrollments.routes.js";
 import accessWindowsRouter from "./admin/accessWindows.routes.js";
 import uploadRouter from "./admin/upload.routes.js";
+import sessionsRouter from "./admin/sessions.routes.js";
 
 const adminRouter = Router();
 
@@ -38,6 +39,7 @@ adminRouter.use("/students", studentsRouter);
 adminRouter.use("/enrollment-requests", enrollmentRequestsRouter);
 adminRouter.use("/enrollments", enrollmentsRouter);
 adminRouter.use("/upload", uploadRouter);
+adminRouter.use("/", sessionsRouter);
 adminRouter.use("/", accessWindowsRouter);
 
 export default adminRouter;
