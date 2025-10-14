@@ -79,7 +79,7 @@ export default function AdminDashboard() {
       title: 'Add Assessment',
       description: 'Create homework or test',
       icon: FileText,
-      href: '/admin/assessments/create',
+      href: '/admin/resources',
       color: 'bg-blue-600 hover:bg-blue-700'
     },
     {
