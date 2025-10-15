@@ -16,7 +16,7 @@ export default function QuestionCard({
   const choiceLabels = ['A', 'B', 'C', 'D']
 
   return (
-    <div className="question-card border rounded-lg p-6 bg-card" id={`question-${question.id}`}>
+    <div className="question-card border rounded-lg p-6 bg-card select-none" id={`question-${question.id}`}>
       {/* Question number and text */}
       <div className="mb-4">
         <div className="flex items-start gap-3">
