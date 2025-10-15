@@ -247,6 +247,30 @@ export default function AssessmentPage() {
     return assessment.passages.flatMap(p => p.questions)
   }
 
+  // Handle navigation to a specific question (may require changing passage)
+  const handleNavigateToQuestion = (questionId) => {
+    // Find which passage contains this question
+    const passageIndex = assessment.passages.findIndex(passage =>
+      passage.questions.some(q => q.id === questionId)
+    )
+
+    if (passageIndex !== -1) {
+      // Switch to the correct passage first
+      setCurrentPassageIndex(passageIndex)
+
+      // Update current question
+      setCurrentQuestionId(questionId)
+
+      // Wait for render, then scroll to question
+      setTimeout(() => {
+        const element = document.getElementById(`question-${questionId}`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+    }
+  }
+
   // Render different states
   if (state === ASSESSMENT_STATES.LOADING) {
     return (
@@ -412,13 +436,18 @@ export default function AssessmentPage() {
                 questions={allQuestions}
                 answers={answers}
                 currentQuestionId={currentQuestionId}
-                onNavigate={setCurrentQuestionId}
+                onNavigate={handleNavigateToQuestion}
               />
             </div>
           </div>
 
           {/* Single passage view */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div
+            className="grid grid-cols-1 lg:grid-cols-5 gap-6"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            onCopy={(e) => e.preventDefault()}
+          >
             {/* Passage */}
             <div className="lg:col-span-2">
               <Card className="p-6 lg:sticky lg:top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
@@ -446,6 +475,37 @@ export default function AssessmentPage() {
               })}
             </div>
           </div>
+
+          {/* Bottom passage navigation (duplicated for easier access) */}
+          {totalPassages > 1 && (
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">
+                  Passage {currentPassageIndex + 1} of {totalPassages}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPassageIndex(prev => Math.max(0, prev - 1))}
+                    disabled={currentPassageIndex === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous Passage
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPassageIndex(prev => Math.min(totalPassages - 1, prev + 1))}
+                    disabled={currentPassageIndex === totalPassages - 1}
+                  >
+                    Next Passage
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Submit dialog */}

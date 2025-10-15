@@ -32,7 +32,7 @@ export default function ChoiceButton({
   }
 
   // Determine button styling based on state
-  let buttonClass = 'relative flex items-start gap-3 w-full min-h-[60px] p-4 text-left transition-all border-2 rounded-lg'
+  let buttonClass = 'relative flex items-start gap-3 w-full min-h-[60px] p-4 text-left transition-all border-2 rounded-lg select-none'
 
   if (isReviewMode) {
     // Review mode: show correct/incorrect

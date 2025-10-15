@@ -3,8 +3,9 @@
  * Countdown timer with localStorage persistence for timed assessments
  */
 import { useState, useEffect, useRef } from 'react'
-import { Clock, AlertCircle } from 'lucide-react'
+import { Clock, AlertCircle, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 
 export default function AssessmentTimer({
   assessmentId,
@@ -14,6 +15,7 @@ export default function AssessmentTimer({
 }) {
   const [secondsRemaining, setSecondsRemaining] = useState(null)
   const [isWarning, setIsWarning] = useState(false)
+  const [warningDismissed, setWarningDismissed] = useState(false)
   const intervalRef = useRef(null)
   const timeUpCalledRef = useRef(false)
 
@@ -80,19 +82,29 @@ export default function AssessmentTimer({
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-50 max-w-xs">
       <div className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg font-mono text-lg font-semibold
                       ${isWarning ? 'bg-red-100 text-red-700 border-2 border-red-500 animate-pulse' : 'bg-card border-2 border-border'}`}>
         <Clock className={`h-5 w-5 ${isWarning ? 'text-red-600' : 'text-muted-foreground'}`} />
         <span>{formattedTime}</span>
       </div>
 
-      {isWarning && (
-        <Alert className="mt-2 bg-yellow-50 border-yellow-500">
+      {isWarning && !warningDismissed && (
+        <Alert className="mt-2 bg-yellow-50 border-yellow-500 relative pr-12">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-sm text-yellow-800">
+          <AlertDescription className="text-sm text-yellow-800 pr-2">
             Less than 5 minutes remaining!
           </AlertDescription>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-1 right-1 h-8 w-8 p-0 hover:bg-yellow-200 rounded-full border border-yellow-300 bg-yellow-100/80"
+            onClick={() => setWarningDismissed(true)}
+            aria-label="Dismiss warning"
+            title="Dismiss warning"
+          >
+            <X className="h-5 w-5 text-yellow-700 font-bold" />
+          </Button>
         </Alert>
       )}
     </div>

@@ -26,7 +26,7 @@ export default function PassageRenderer({ content, title, imageURL }) {
                    prose-p:mb-4 prose-p:text-foreground
                    prose-em:italic prose-em:text-foreground
                    prose-strong:font-semibold prose-strong:text-foreground
-                   select-text"
+                   select-none"
         dangerouslySetInnerHTML={{ __html: content }}
       />
     </div>

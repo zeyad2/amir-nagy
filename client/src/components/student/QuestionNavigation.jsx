@@ -6,14 +6,6 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle2, Circle } from 'lucide-react'
 
 export default function QuestionNavigation({ questions, answers, currentQuestionId, onNavigate }) {
-  const scrollToQuestion = (questionId) => {
-    const element = document.getElementById(`question-${questionId}`)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      onNavigate(questionId)
-    }
-  }
-
   return (
     <div className="question-navigation border rounded-lg p-4 bg-card">
       <div className="flex items-center justify-between mb-3">
@@ -36,7 +28,7 @@ export default function QuestionNavigation({ questions, answers, currentQuestion
               type="button"
               variant={isCurrent ? 'default' : 'outline'}
               size="sm"
-              onClick={() => scrollToQuestion(question.id)}
+              onClick={() => onNavigate(question.id)}
               className={`relative h-9 w-12 ${isCurrent ? '' : isAnswered ? 'border-green-500' : ''}`}
             >
               {index + 1}
