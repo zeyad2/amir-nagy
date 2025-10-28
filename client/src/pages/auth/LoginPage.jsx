@@ -55,8 +55,19 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sat-light to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-sat-primary rounded-full flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-2xl">S</span>
+          <div className="mx-auto mb-4 flex justify-center">
+            <img
+              src="/images/amir-nagy-logo.png"
+              alt="Amir Nagy Logo"
+              className="h-20 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.className = 'w-16 h-16 bg-sat-primary rounded-full flex items-center justify-center';
+                fallback.innerHTML = '<span class="text-white font-bold text-2xl">S</span>';
+                e.target.parentElement.appendChild(fallback);
+              }}
+            />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
             Welcome back
