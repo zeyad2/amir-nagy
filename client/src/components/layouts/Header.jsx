@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/utils/AuthContext'
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +19,7 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { user, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = () => {
     logout()
@@ -27,9 +28,30 @@ export default function Header() {
     setMobileMenuOpen(false)
   }
 
-  const publicNavItems = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Courses', href: '/courses', icon: BookOpen },
+  // Check if we're on landing page
+  const isLandingPage = location.pathname === '/'
+
+  // Smooth scroll to section
+  const scrollToSection = (sectionId) => {
+    setMobileMenuOpen(false)
+    if (location.pathname !== '/') {
+      navigate('/')
+      setTimeout(() => {
+        const element = document.getElementById(sectionId)
+        element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    } else {
+      const element = document.getElementById(sectionId)
+      element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const landingSections = [
+    { name: 'Home', sectionId: 'hero' },
+    { name: 'Testimonials', sectionId: 'testimonials' },
+    { name: 'Courses', sectionId: 'courses' },
+    { name: 'Community', sectionId: 'community' },
+    { name: 'FAQ', sectionId: 'faq' },
   ]
 
   const studentNavItems = [
@@ -46,13 +68,13 @@ export default function Header() {
   ]
 
   const getNavItems = () => {
-    if (!isAuthenticated) return publicNavItems
     if (user?.role === 'admin') return adminNavItems
     if (user?.role === 'student') return studentNavItems
-    return publicNavItems
+    return null // For non-authenticated users, we'll show landing sections
   }
 
   const navItems = getNavItems()
+  const showLandingSections = !isAuthenticated
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -60,28 +82,52 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-sat-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
+            <Link to="/" className="flex items-center">
+              <div className="h-12 flex items-center">
+                <img
+                  src="/images/amir-nagy-logo.png"
+                  alt="Amir Nagy Logo"
+                  className="h-full w-auto object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'flex items-center space-x-2';
+                    fallback.innerHTML = '<div class="w-8 h-8 bg-sat-primary rounded-lg flex items-center justify-center"><span class="text-white font-bold text-lg">S</span></div><span class="hidden sm:block text-xl font-bold text-gray-900">SAT Platform</span>';
+                    e.target.parentElement.appendChild(fallback);
+                  }}
+                />
               </div>
-              <span className="hidden sm:block text-xl font-bold text-gray-900">
-                SAT Platform
-              </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className="nav-link flex items-center space-x-1"
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {showLandingSections ? (
+              <>
+                {landingSections.map((section) => (
+                  <button
+                    key={section.sectionId}
+                    onClick={() => scrollToSection(section.sectionId)}
+                    className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    {section.name}
+                  </button>
+                ))}
+              </>
+            ) : (
+              <>
+                {navItems?.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="nav-link flex items-center space-x-1"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                ))}
+              </>
+            )}
           </nav>
 
           {/* Desktop Auth Buttons */}
@@ -150,17 +196,33 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden" id="mobile-menu" role="navigation" aria-label="Mobile navigation menu">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-sat-primary hover:bg-gray-50 rounded-md flex items-center space-x-2"
-              >
-                <item.icon className="h-5 w-5" />
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {showLandingSections ? (
+              <>
+                {landingSections.map((section) => (
+                  <button
+                    key={section.sectionId}
+                    onClick={() => scrollToSection(section.sectionId)}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
+                  >
+                    {section.name}
+                  </button>
+                ))}
+              </>
+            ) : (
+              <>
+                {navItems?.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-sat-primary hover:bg-gray-50 rounded-md flex items-center space-x-2"
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.name}</span>
+                  </Link>
+                ))}
+              </>
+            )}
 
             {/* Mobile Auth */}
             <div className="pt-4 border-t border-gray-200">

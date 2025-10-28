@@ -150,8 +150,12 @@ export const getStudentById = async (req, res) => {
         },
         testSubmissions: {
           include: {
-            test: {
-              select: { id: true, title: true }
+            CourseTest: {
+              include: {
+                test: {
+                  select: { id: true, title: true }
+                }
+              }
             }
           }
         }
