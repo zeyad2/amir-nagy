@@ -71,6 +71,7 @@ model Course {
   courseHomeworks    CourseHomework[]
   courseLessons      CourseLesson[]
   courseTests        CourseTest[]
+  courseFiles        CourseCourseFile[]
   enrollments        Enrollment[]
   enrollmentRequests EnrollmentRequest[]
   sessions           Session[]
@@ -180,6 +181,37 @@ model CourseLesson {
   @@unique([courseId, lessonId], map: "courseLesson_courseId_lessonId_key")
   @@index([courseId], map: "courseLesson_courseId_idx")
   @@map("CourseLesson")
+}
+
+model CourseFile {
+  id          BigInt             @id(map: "courseFile_pkey") @default(autoincrement())
+  title       String
+  description String?
+  fileName    String
+  fileUrl     String
+  fileSize    BigInt
+  mimeType    String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime?
+  courseFiles CourseCourseFile[]
+
+  @@map("CourseFile")
+}
+
+model CourseCourseFile {
+  id           BigInt     @id(map: "courseCourseFile_pkey") @default(autoincrement())
+  courseId     BigInt
+  courseFileId BigInt
+  order        Int?
+  isRestricted Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "courseCourseFile_courseId_fkey")
+  courseFile   CourseFile @relation(fields: [courseFileId], references: [id], onDelete: Cascade, map: "courseCourseFile_courseFileId_fkey")
+
+  @@unique([courseId, courseFileId], map: "courseCourseFile_courseId_courseFileId_key")
+  @@index([courseId], map: "courseCourseFile_courseId_idx")
+  @@map("CourseCourseFile")
 }
 
 model Homework {

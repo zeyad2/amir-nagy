@@ -14,6 +14,7 @@ import { adminService } from '@/services/admin.service'
 import { formatDate } from '@/utils/helpers'
 import TestBuilder from '@/components/admin/tests/TestBuilder'
 import HomeworkBuilder from '@/components/admin/homework/HomeworkBuilder'
+import CourseFileManager from '@/components/admin/CourseFileManager'
 
 export default function AdminResources() {
   const [activeTab, setActiveTab] = useState('lessons')
@@ -156,10 +157,11 @@ export default function AdminResources() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="lessons">Lessons</TabsTrigger>
               <TabsTrigger value="homework">Homework</TabsTrigger>
               <TabsTrigger value="tests">Tests</TabsTrigger>
+              <TabsTrigger value="files">Files</TabsTrigger>
             </TabsList>
 
             <TabsContent value="lessons" className="space-y-6">
@@ -277,6 +279,10 @@ export default function AdminResources() {
 
             <TabsContent value="tests" className="space-y-6">
               <TestBuilder />
+            </TabsContent>
+
+            <TabsContent value="files" className="space-y-6">
+              <CourseFileManager />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -7,6 +7,9 @@ import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import toast from 'react-hot-toast';
 import LessonViewer from '../components/LessonViewer';
+import FileIcon from '../components/common/FileIcon';
+import { formatFileSize } from '../utils/fileHelpers';
+import { Download } from 'lucide-react';
 
 const CourseDetailPage = () => {
   const { id } = useParams();
@@ -295,6 +298,46 @@ const CourseDetailPage = () => {
                   )}
                 </div>
               </div>
+
+              {/* Files */}
+              <div className="card">
+                <div className="card-header">
+                  <h2 className="text-lg font-semibold">Course Files</h2>
+                </div>
+                <div className="card-body">
+                  {!course.courseFiles || course.courseFiles.length === 0 ? (
+                    <p className="text-sm text-gray-500">No files available</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {course.courseFiles.map((courseFile, index) => (
+                        <li key={courseFile.id}>
+                          <div className="flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <FileIcon mimeType={courseFile.courseFile.mimeType} size={28} className="mr-3" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {courseFile.courseFile.title}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {courseFile.courseFile.fileName} • {formatFileSize(parseInt(courseFile.courseFile.fileSize))}
+                              </p>
+                            </div>
+                            <a
+                              href={courseFile.courseFile.fileUrl}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Download file"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Main Content Area - Lesson Viewer */}
@@ -304,7 +347,7 @@ const CourseDetailPage = () => {
           </div>
         ) : (
           /* Non-Enrolled View - Preview Only */
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Lessons */}
             <div className="card transition-all duration-500 hover:shadow-xl animate-slideUp animation-delay-100 hover:-translate-y-1">
               <div className="card-header bg-gradient-to-r from-blue-50 to-blue-100 transition-all duration-300">
@@ -393,6 +436,41 @@ const CourseDetailPage = () => {
                         </span>
                         <span className="text-gray-600 font-medium flex-1 group-hover:text-gray-800 transition-colors duration-300">
                           {courseTest.test.title}
+                        </span>
+                        <span className="ml-auto text-lg text-orange-500 group-hover:text-orange-600 transition-all duration-300 group-hover:scale-125">
+                          🔒
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Files */}
+            <div className="card transition-all duration-500 hover:shadow-xl animate-slideUp animation-delay-400 hover:-translate-y-1">
+              <div className="card-header bg-gradient-to-r from-orange-50 to-orange-100 transition-all duration-300">
+                <h2 className="text-xl font-semibold text-orange-900">Course Files</h2>
+              </div>
+              <div className="card-body">
+                {!course.courseFiles || course.courseFiles.length === 0 ? (
+                  <p className="text-gray-500 animate-fadeIn">No files available</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {course.courseFiles.map((courseFile, index) => (
+                      <li
+                        key={courseFile.id}
+                        className="group relative flex items-center p-3 rounded-lg border border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed transition-all duration-300 hover:opacity-90 hover:scale-[1.03] hover:shadow-lg hover:border-orange-300 animate-fadeIn"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                        title="Enroll to access this content"
+                      >
+                        <FileIcon
+                          mimeType={courseFile.courseFile.mimeType}
+                          size={32}
+                          className="mr-3 flex-shrink-0 transition-all duration-300 group-hover:scale-110"
+                        />
+                        <span className="text-gray-600 font-medium flex-1 group-hover:text-gray-800 transition-colors duration-300 truncate">
+                          {courseFile.courseFile.title}
                         </span>
                         <span className="ml-auto text-lg text-orange-500 group-hover:text-orange-600 transition-all duration-300 group-hover:scale-125">
                           🔒

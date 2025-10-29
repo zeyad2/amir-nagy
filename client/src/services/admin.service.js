@@ -139,6 +139,47 @@ export const adminService = {
     })
   },
 
+  // Course Files management
+  getAllCourseFiles: (filters = {}) => {
+    return api.get('/admin/course-files', { params: filters })
+  },
+
+  getCourseFile: (id) => {
+    return api.get(`/admin/course-files/${id}`)
+  },
+
+  createCourseFile: (formData) => {
+    return api.post('/admin/course-files', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  updateCourseFile: (id, fileData) => {
+    return api.put(`/admin/course-files/${id}`, fileData)
+  },
+
+  deleteCourseFile: (id) => {
+    return api.delete(`/admin/course-files/${id}`)
+  },
+
+  getCourseFileCourses: (id) => {
+    return api.get(`/admin/course-files/${id}/courses`)
+  },
+
+  assignFilesToCourse: (courseId, fileIds, orders = {}) => {
+    return api.post(`/admin/courses/${courseId}/content`, {
+      type: 'files',
+      contentIds: fileIds,
+      orders
+    })
+  },
+
+  removeFileFromCourse: (courseId, fileId) => {
+    return api.delete(`/admin/courses/${courseId}/content/${fileId}?type=file`)
+  },
+
   // Analytics and reports
   getPerformanceAnalytics: (filters = {}) => {
     return api.get('/admin/analytics', { params: filters })
