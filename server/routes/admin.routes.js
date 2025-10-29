@@ -19,6 +19,7 @@ import accessWindowsRouter from "./admin/accessWindows.routes.js";
 import uploadRouter from "./admin/upload.routes.js";
 import sessionsRouter from "./admin/sessions.routes.js";
 import attendanceRouter from "./admin/attendance.routes.js";
+import courseFilesRouter from "./admin/courseFiles.routes.js";
 
 const adminRouter = Router();
 
@@ -35,6 +36,7 @@ adminRouter.use("/homework", homeworkRouter);
 adminRouter.use("/tests", testsRouter);
 adminRouter.use("/assessments", assessmentsRouter);
 adminRouter.use("/courses", coursesRouter);
+adminRouter.use("/course-files", courseFilesRouter);
 adminRouter.use("/dashboard", dashboardRouter);
 adminRouter.use("/students", studentsRouter);
 adminRouter.use("/enrollment-requests", enrollmentRequestsRouter);

@@ -185,6 +185,14 @@ export const getCourse = async (req, res) => {
             }
           },
           orderBy: { dueDate: 'asc' }
+        },
+        courseFiles: {
+          include: {
+            courseFile: {
+              select: { id: true, title: true, fileName: true, fileSize: true, mimeType: true, fileUrl: true }
+            }
+          },
+          orderBy: { order: 'asc' }
         }
       }
     });
@@ -209,7 +217,8 @@ export const getCourse = async (req, res) => {
         totalLessons: course.courseLessons.length,
         totalHomework: course.courseHomeworks.length,
         totalTests: course.courseTests.length,
-        totalContent: course.courseLessons.length + course.courseHomeworks.length + course.courseTests.length
+        totalFiles: course.courseFiles.length,
+        totalContent: course.courseLessons.length + course.courseHomeworks.length + course.courseTests.length + course.courseFiles.length
       },
       content: {
         lessons: course.courseLessons.map(cl => ({
@@ -226,6 +235,16 @@ export const getCourse = async (req, res) => {
           id: ct.test.id.toString(),
           title: ct.test.title,
           dueDate: ct.dueDate
+        })),
+        files: course.courseFiles.map(cf => ({
+          id: cf.courseFile.id.toString(),
+          title: cf.courseFile.title,
+          fileName: cf.courseFile.fileName,
+          fileSize: cf.courseFile.fileSize.toString(),
+          mimeType: cf.courseFile.mimeType,
+          fileUrl: cf.courseFile.fileUrl,
+          order: cf.order,
+          isRestricted: cf.isRestricted
         }))
       },
       enrolledStudents: course.enrollments.map(enrollment => ({
@@ -574,9 +593,9 @@ export const assignContent = async (req, res) => {
       }
     }
 
-    const validTypes = ['lessons', 'homework', 'tests'];
+    const validTypes = ['lessons', 'homework', 'tests', 'files'];
     if (!validTypes.includes(type)) {
-      return createErrorResponse(res, 400, 'Invalid content type. Must be one of: lessons, homework, tests');
+      return createErrorResponse(res, 400, 'Invalid content type. Must be one of: lessons, homework, tests, files');
     }
 
     // Check if course exists
@@ -712,6 +731,43 @@ export const assignContent = async (req, res) => {
           data: createData
         });
       }
+
+    } else if (type === 'files') {
+      // Check if course files exist
+      const files = await Prisma.courseFile.findMany({
+        where: {
+          id: { in: contentIds.map(id => BigInt(id)) },
+          deletedAt: null
+        }
+      });
+
+      if (files.length !== contentIds.length) {
+        return createErrorResponse(res, 400, 'One or more files not found');
+      }
+
+      // Get existing associations to avoid duplicates
+      const existing = await Prisma.courseCourseFile.findMany({
+        where: {
+          courseId,
+          courseFileId: { in: contentIds.map(id => BigInt(id)) }
+        }
+      });
+
+      const existingFileIds = existing.map(cf => cf.courseFileId.toString());
+      const newFileIds = contentIds.filter(id => !existingFileIds.includes(id));
+
+      createData = newFileIds.map((fileId, index) => ({
+        courseId,
+        courseFileId: BigInt(fileId),
+        order: existing.length + index + 1,
+        isRestricted: false // Default: not restricted, can be changed later
+      }));
+
+      if (createData.length > 0) {
+        await Prisma.courseCourseFile.createMany({
+          data: createData
+        });
+      }
     }
 
     const assignedCount = createData.length;
@@ -749,9 +805,9 @@ export const removeContent = async (req, res) => {
       return createErrorResponse(res, 400, 'Content type is required as a query parameter');
     }
 
-    const validTypes = ['lesson', 'homework', 'test'];
+    const validTypes = ['lesson', 'homework', 'test', 'file'];
     if (!validTypes.includes(type)) {
-      return createErrorResponse(res, 400, 'Invalid content type. Must be one of: lesson, homework, test');
+      return createErrorResponse(res, 400, 'Invalid content type. Must be one of: lesson, homework, test, file');
     }
 
     // Validate contentId can be converted to BigInt
@@ -840,6 +896,40 @@ export const removeContent = async (req, res) => {
         where: {
           courseId: courseIdBigInt,
           testId: contentIdBigInt
+        }
+      });
+    } else if (type === 'file') {
+      console.log('Removing file - courseId:', id, 'contentId:', contentId, 'type:', typeof contentId);
+      console.log('BigInt values - courseIdBigInt:', courseIdBigInt.toString(), 'contentIdBigInt:', contentIdBigInt.toString());
+
+      // First check if the association exists
+      const existing = await Prisma.courseCourseFile.findFirst({
+        where: {
+          courseId: courseIdBigInt,
+          courseFileId: contentIdBigInt
+        }
+      });
+
+      console.log('Existing courseCourseFile:', existing);
+
+      if (!existing) {
+        console.error('File not found in course - searching for all files in this course');
+        const allCourseFiles = await Prisma.courseCourseFile.findMany({
+          where: { courseId: courseIdBigInt },
+          include: { courseFile: true }
+        });
+        console.log('All files in course:', allCourseFiles.map(cf => ({
+          id: cf.id.toString(),
+          courseFileId: cf.courseFileId.toString(),
+          courseFile: { id: cf.courseFile.id.toString(), title: cf.courseFile.title }
+        })));
+        return createErrorResponse(res, 404, `File ${contentId} not found in course ${id}`);
+      }
+
+      deleteResult = await Prisma.courseCourseFile.deleteMany({
+        where: {
+          courseId: courseIdBigInt,
+          courseFileId: contentIdBigInt
         }
       });
     }

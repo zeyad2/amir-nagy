@@ -110,11 +110,35 @@ export const getPublicCourseDetail = async (req, res) => {
             }
           }
         },
+        courseFiles: {
+          include: {
+            courseFile: {
+              select: {
+                id: true,
+                title: true,
+                fileName: true,
+                fileUrl: true,
+                fileSize: true,
+                mimeType: true,
+                description: true
+              }
+            }
+          },
+          where: {
+            courseFile: {
+              deletedAt: null
+            }
+          },
+          orderBy: {
+            order: 'asc'
+          }
+        },
         _count: {
           select: {
             courseLessons: true,
             courseHomeworks: true,
-            courseTests: true
+            courseTests: true,
+            courseFiles: true
           }
         }
       }
@@ -160,6 +184,20 @@ export const getPublicCourseDetail = async (req, res) => {
           duration: ct.test.duration
         }
       })),
+      courseFiles: course.courseFiles.map(cf => ({
+        id: cf.id.toString(),
+        order: cf.order,
+        isRestricted: cf.isRestricted,
+        courseFile: {
+          id: cf.courseFile.id.toString(),
+          title: cf.courseFile.title,
+          fileName: cf.courseFile.fileName,
+          fileUrl: cf.courseFile.fileUrl,
+          fileSize: cf.courseFile.fileSize.toString(),
+          mimeType: cf.courseFile.mimeType,
+          description: cf.courseFile.description
+        }
+      })),
       _count: course._count,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt
@@ -198,12 +236,12 @@ export const getPublicCourseDetail = async (req, res) => {
               courseId: BigInt(courseId)
             },
             orderBy: {
-              createdAt: 'desc'
+              requestedAt: 'desc'
             },
             select: {
               id: true,
               status: true,
-              createdAt: true
+              requestedAt: true
             }
           });
         }
@@ -234,7 +272,7 @@ export const getPublicCourseDetail = async (req, res) => {
     const enrollmentRequestResponse = enrollmentRequest ? {
       id: enrollmentRequest.id.toString(),
       status: enrollmentRequest.status,
-      createdAt: enrollmentRequest.createdAt
+      createdAt: enrollmentRequest.requestedAt
     } : null;
 
     return createResponse(res, 200, 'Course details fetched successfully', {
